@@ -1,6 +1,7 @@
 import pygame
 from player import Player
-from background import Background
+from map import Background
+from inventory import Inventory
 
 # Inicjalizacja Pygame i ustawienia ekranu
 pygame.init()
@@ -11,6 +12,7 @@ clock = pygame.time.Clock()
 # Tworzenie instancji gracza i tła
 player = Player(screen_width, screen_height)
 background = Background(screen_width, screen_height)
+inventory=Inventory(screen_width, screen_height)
 
 # Główna pętla gry
 running = True
@@ -26,10 +28,11 @@ while running:
     # Aktualizacja gracza
     player.update(keys, clock)
     
-    # Rysowanie tła, gracza i liści
+    # Rysowanie tła, gracza i liści i inventory
     background.draw_tiles(screen)
     player.draw(screen)
     background.draw_leaves(screen)
+    inventory.update_inventory(keys, screen)
     
     # Aktualizacja ekranu
     pygame.display.flip()

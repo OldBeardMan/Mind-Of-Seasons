@@ -1,15 +1,15 @@
 
     # TODO Zaprogramować UI, przyciski otwarcia inventory, wyświetlanie inventory, dodawanie kotków po kliknięciu do inventory
 import pygame
-def load_inventory_graphics():
+def load_inventory_graphics(screen_width,screen_height):
     image_inventory = pygame.image.load('Grafiki/UI/Slot.png').convert_alpha()
-    image_inventory = pygame.transform.scale(image_inventory,(700,900))
+    image_inventory = pygame.transform.scale(image_inventory,(screen_width//1.9,screen_height//1.2))
     return image_inventory
 
 class Inventory:
     def __init__(self,screen_width, screen_height):
         # Ładowanie grafiki ekwipunku
-        self.inventory_image = load_inventory_graphics()
+        self.inventory_image = load_inventory_graphics(screen_width,screen_height)
         self.inventory_rect = self.inventory_image.get_rect(center=(screen_width // 2, screen_height // 2))
         self.inventory_open = False
         self.toggle_pressed = False

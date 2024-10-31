@@ -2,6 +2,13 @@ import pygame
 
 # TODO Zaprogramować generowanie mapy z drzewami i ścieżką (folder Grafiki/Landscape)
 # TODO Zaprogramować generowanie się kotków (Grafiki/NPC) na mapie pomiędzy drzewami
+# TODO Kolizja ze sprytkiem nie jest precyzyjna, kiedyś mozna to poprawić
+#ładowanie grafiki sprytka
+def  load_sprytek():
+    image_sprytek=pygame.image.load('Grafiki/NPC/Sprytek.png')
+    image_sprytek=pygame.transform.scale(image_sprytek,(60,70))
+    return image_sprytek
+
 
 # Funkcja do ładowania grafiki tła i liści
 def load_background_graphics():
@@ -20,6 +27,8 @@ def load_background_graphics():
 class Background:
     def __init__(self, screen_width, screen_height):
         self.tile_image, self.leaves_animation = load_background_graphics()
+        self.image_sprytek=load_sprytek()
+        self.sprytek_rect=self.image_sprytek.get_rect(center=(screen_width // 3, screen_height // 3))
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.tile_size = 64
@@ -42,3 +51,6 @@ class Background:
         for y in range(0, self.screen_height, self.leaves_size):
             for x in range(0, self.screen_width, self.leaves_size):
                 screen.blit(self.leaves_animation[self.l_frame], (x, y))
+
+    def draw_sprytek(self, screen):
+        screen.blit(self.image_sprytek, self.sprytek_rect)

@@ -24,16 +24,18 @@ while running:
             running = False
 
     keys = pygame.key.get_pressed()
-    
+
     # Aktualizacja gracza
-    player.update(keys, clock)
-    
-    # Rysowanie tła, gracza i liści i inventory
+    player.update(keys, clock,background)
+
+    # Rysowanie tła, gracza i liści i inventory i sprytka
     background.draw_tiles(screen)
     player.draw(screen)
+    background.draw_sprytek(screen)
     background.draw_leaves(screen)
     inventory.update_inventory(keys, screen)
-    
+
+
     # Aktualizacja ekranu
     pygame.display.flip()
     clock.tick(60)

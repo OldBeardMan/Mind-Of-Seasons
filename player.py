@@ -28,9 +28,9 @@ class Player:
         self.facing_right = True
         self.player_rect = self.image_idle.get_rect(center=(screen_width // 2, screen_height // 2))
         
-    def update(self, keys, clock,background):
+    def update(self, keys, clock,npc):
         self.is_walking = False
-        #kopia pozycji gracza aby do sprawdzenia kolizji
+        #kopia pozycji gracza do sprawdzenia kolizji
         new_position = self.player_rect.copy()
         # Ruch w poziomie
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
@@ -43,7 +43,7 @@ class Player:
             self.facing_right = False
 
         # Sprawdzenie kolizji w poziomie ze sprytkiem
-        if not new_position.colliderect(background.sprytek_rect):
+        if not new_position.colliderect(npc.sprytek_rect):
             self.player_rect.x = new_position.x  # Aktualizacja pozycji poziomej tylko, gdy nie ma kolizji
 
         # Ruch w pionie
@@ -56,7 +56,7 @@ class Player:
             self.is_walking = True
 
         # Sprawdzenie kolizji w pionie ze sprytkiem
-        if not new_position.colliderect(background.sprytek_rect):
+        if not new_position.colliderect(npc.sprytek_rect):
             self.player_rect.y = new_position.y  # Aktualizacja pozycji pionowej tylko, gdy nie ma kolizji
 
         # Animacja chodzenia

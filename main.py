@@ -2,6 +2,7 @@ import pygame
 from player import Player
 from map import Background
 from inventory import Inventory
+from npc import Npc
 
 # Inicjalizacja Pygame i ustawienia ekranu
 pygame.init()
@@ -13,7 +14,7 @@ clock = pygame.time.Clock()
 player = Player(screen_width, screen_height)
 background = Background(screen_width, screen_height)
 inventory=Inventory(screen_width, screen_height)
-
+npc=Npc(screen_width, screen_height)
 # Główna pętla gry
 running = True
 while running:
@@ -26,15 +27,16 @@ while running:
     keys = pygame.key.get_pressed()
 
     # Aktualizacja gracza
-    player.update(keys, clock,background)
+    player.update(keys, clock,npc)
 
     # Rysowanie tła, gracza i liści i inventory i sprytka
     background.draw_tiles(screen)
     player.draw(screen)
-    background.draw_sprytek(screen)
+    npc.draw_sprytek(screen)
     background.draw_leaves(screen)
     inventory.update_inventory(keys, screen)
 
+    npc.draw_chat_graphics(screen,player)
 
     # Aktualizacja ekranu
     pygame.display.flip()

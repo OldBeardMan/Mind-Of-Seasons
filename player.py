@@ -73,7 +73,7 @@ class Player:
             self.image = self.image_idle
 
         # Obracanie w prawo/lewo
-        if not self.facing_right:
+        if self.facing_right:
             self.image = pygame.transform.flip(self.image, True, False)
         
     def draw(self, screen, camera_offset):

@@ -1,20 +1,25 @@
 import pygame
 from player import Player
-from map import Background
+from background import Background
+from map_generator import calculate_camera_offset
 from inventory import Inventory
 from npc import Npc
 
 # Inicjalizacja Pygame i ustawienia ekranu
 pygame.init()
+TILE_SIZE = 64
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-screen_width, screen_height = screen.get_size()
+SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
 clock = pygame.time.Clock()
+pygame.display.set_caption("Swędząca dupa xddddd")
 
 # Tworzenie instancji gracza i tła
-player = Player(screen_width, screen_height)
-background = Background(screen_width, screen_height)
-inventory=Inventory(screen_width, screen_height)
-npc=Npc(screen_width, screen_height)
+map_width, map_height = 50, 50  # Większa mapa niż ekran
+background = Background(map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
+player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE)
+inventory=Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
+npc=Npc(SCREEN_WIDTH, SCREEN_HEIGHT)
+
 # Główna pętla gry
 running = True
 while running:
@@ -29,11 +34,14 @@ while running:
     # Aktualizacja gracza
     player.update(keys, clock,npc)
 
+    # Oblicz przesunięcie kamery
+    camera_offset = calculate_camera_offset(player, map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
+
     # Rysowanie tła, gracza i liści i inventory i sprytka
-    background.draw_tiles(screen)
-    player.draw(screen)
+    background.draw(screen, camera_offset)
+    player.draw(screen, camera_offset)
     npc.draw_sprytek(screen)
-    background.draw_leaves(screen)
+    background.draw_leaves(screen, camera_offset)
     inventory.update_inventory(keys, screen)
 
     npc.draw_chat_graphics(screen,player)

@@ -1,7 +1,5 @@
 import pygame
-# TODO zaprogramować kamerę, aby podążała za graczem
-# TODO aktualnie w sterowaniu graczem sprawdzana jest kolizja tylko ze sprytkiem , jeśli chcemy sprawdzić kolizje z wieoma obiektami trzeba zrobić tablice obiektów
-# Funkcja do ładowania i skalowania grafiki gracza
+
 def load_player_graphics():
     image_idle = pygame.image.load('Grafiki/Character/character_idle.png').convert_alpha()
     image_walk1 = pygame.image.load('Grafiki/Character/character_walk1.png').convert_alpha()
@@ -15,9 +13,8 @@ def load_player_graphics():
     walk_animation = [image_walk1, image_walk2]
     return image_idle, walk_animation
 
-# Klasa Gracza
 class Player:
-    def __init__(self, screen_width, screen_height):
+    def __init__(self, screen_width, screen_height, tile_size):
         self.image = None
         self.image_idle, self.walk_animation = load_player_graphics()
         self.current_frame = 0
@@ -26,13 +23,15 @@ class Player:
         self.speed = 5
         self.is_walking = False
         self.facing_right = True
+        self.tile_size = tile_size
+        self.map_position = [10, 10]  # Pozycja gracza na mapie (w kafelkach)
         self.player_rect = self.image_idle.get_rect(center=(screen_width // 2, screen_height // 2))
         
-    def update(self, keys, clock,npc):
+    def update(self, keys, clock, npc):
         self.is_walking = False
-        #kopia pozycji gracza do sprawdzenia kolizji
         new_position = self.player_rect.copy()
-        # Ruch w poziomie
+        
+        # Ruch poziomy
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             new_position.x += self.speed
             self.is_walking = True
@@ -42,12 +41,12 @@ class Player:
             self.is_walking = True
             self.facing_right = False
 
-        # Sprawdzenie kolizji w poziomie ze sprytkiem
+        # Kolizja ze sprytkiem w poziomie
         if not new_position.colliderect(npc.sprytek_rect):
-            self.player_rect.x = new_position.x  # Aktualizacja pozycji poziomej tylko, gdy nie ma kolizji
+            self.player_rect.x = new_position.x
 
-        # Ruch w pionie
-        new_position = self.player_rect.copy()  # Ponownie kopiujemy pozycję, aby sprawdzić ruch pionowy
+        # Ruch pionowy
+        new_position = self.player_rect.copy()
         if keys[pygame.K_w] or keys[pygame.K_UP]:
             new_position.y -= self.speed
             self.is_walking = True
@@ -55,9 +54,13 @@ class Player:
             new_position.y += self.speed
             self.is_walking = True
 
-        # Sprawdzenie kolizji w pionie ze sprytkiem
+        # Kolizja ze sprytkiem w pionie
         if not new_position.colliderect(npc.sprytek_rect):
-            self.player_rect.y = new_position.y  # Aktualizacja pozycji pionowej tylko, gdy nie ma kolizji
+            self.player_rect.y = new_position.y
+
+        # Aktualizacja pozycji gracza na mapie (w kafelkach)
+        self.map_position[0] = self.player_rect.x // self.tile_size
+        self.map_position[1] = self.player_rect.y // self.tile_size
 
         # Animacja chodzenia
         if self.is_walking:
@@ -70,8 +73,11 @@ class Player:
             self.image = self.image_idle
 
         # Obracanie w prawo/lewo
-        if self.facing_right:
+        if not self.facing_right:
             self.image = pygame.transform.flip(self.image, True, False)
         
-    def draw(self, screen):
-        screen.blit(self.image, self.player_rect)
+    def draw(self, screen, camera_offset):
+        # Rysowanie z przesunięciem kamery
+        screen_x = self.player_rect.x - camera_offset[0]
+        screen_y = self.player_rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))

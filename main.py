@@ -1,7 +1,7 @@
 import pygame
 from player import Player
 from background import Background
-from map_generator import calculate_camera_offset
+from camera import calculate_camera_offset
 from inventory import Inventory
 from npc import Npc
 

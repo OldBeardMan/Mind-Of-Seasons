@@ -18,7 +18,7 @@ map_width, map_height = 50, 50  # Większa mapa niż ekran
 background = Background(map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE)
 inventory=Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
-npc=Npc(SCREEN_WIDTH, SCREEN_HEIGHT)
+npc=Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=300, y=400)
 
 # Główna pętla gry
 running = True
@@ -40,11 +40,11 @@ while running:
     # Rysowanie tła, gracza i liści i inventory i sprytka
     background.draw(screen, camera_offset)
     player.draw(screen, camera_offset)
-    npc.draw_sprytek(screen)
+    npc.draw_sprytek(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)
     inventory.update_inventory(keys, screen)
 
-    npc.draw_chat_graphics(screen,player)
+    npc.draw_chat_graphics(screen,player, camera_offset)
 
     # Aktualizacja ekranu
     pygame.display.flip()

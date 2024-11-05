@@ -38,8 +38,7 @@ while running:
     camera_offset = calculate_camera_offset(player, map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 
     # Rysowanie tła, gracza i liści i inventory i sprytka
-    background.draw(screen, camera_offset)
-    player.draw(screen, camera_offset)
+    background.draw(screen, camera_offset, player)
     npc.draw_sprytek(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)
     inventory.update_inventory(keys, screen)

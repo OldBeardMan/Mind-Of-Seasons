@@ -11,7 +11,6 @@ def generate_pattern(width=50, height=50, path_length=40,path_width=3, level = 1
 
     vertical = True #pionowo
     horizontal = False #poziomo
-    direction = 0 # 0-pionowo, 1-poziomo
 
     for _ in range(path_length):
         if vertical:

@@ -1,62 +1,98 @@
 import random
 
+def generate_path(grid, width, height, path_length, level):
 
-def generate_pattern(width=50, height=50, path_length=40,path_width=3, level = 10):
-    # Inicjalizacja siatki
-    grid = [["0" for _ in range(width)] for _ in range(height)]
+    #początek scieżki
+    x, y = random.randint(0,width), random.randint(0,height)
 
-    x, y = 10,10
+    #licznik długosci fragmentu sciezki
     count_vertical = 0
     count_horizontal = 0
 
     vertical = True #pionowo
     horizontal = False #poziomo
 
+    direction = 1
+
     for _ in range(path_length):
         if vertical:
-            newx, newy = x + 1, y
-            seg = random.randint(0, path_width-1)
-            if newx in range(width) and newy + path_width in range(height):
+            newx, newy = x + direction, y
+            try:
                 grid[newx][newy - 1] = "1"
                 grid[newx][newy] = "1"
                 grid[newx][newy + 1] = "1"
+            except IndexError:
+                break
 
             count_vertical += 1
-            x, y = newx, random.randint(newy +1 - seg, newy + path_width-2 - seg)
+            x, y = newx, random.randint(newy -1, newy + 1)
         else:
-            newx, newy = x, y + 1
-            seg = random.randint(0, path_width - 1)
-            if newx + path_width in range(width) and newy in range(height):
+            newx, newy = x, y + direction
+            try:
                 grid[newx - 1][newy] = "1"
                 grid[newx][newy] = "1"
                 grid[newx + 1][newy] = "1"
+            except IndexError:
+                break
 
             count_horizontal += 1
-            x, y = random.randint(newx + 1 - seg, newx + path_width - 2 - seg), newy
+            x, y = random.randint(newx - 1, newx + 1), newy
 
-        direction = random.randint(0, 1)
         #zmiana z pionowo na poziomo
-        if direction == 1 and vertical and count_vertical >= level:
-            # z pionowo na poziomo w prawo
-            if newy + 2 in range(height):
+        if vertical and count_vertical >= level:
+            rand = random.randint(0, 1)
+            if rand == 0:
+                way = -1
+            else:
+                way = 1
+            # z pionowo na poziomo naroznik
+            try:
                 grid[x][newy - 1] = "1"
                 grid[x][newy] = "1"
                 grid[x][newy + 1] = "1"
-                grid[x+1][newy] = "1"
-                grid[x + 1][newy + 1] = "1"
-                grid[x + 2][newy +1] = "1"
-                x,y= x+1, newy+1
+                grid[x + direction][newy] = "1"
+                grid[x + direction][newy + way] = "1"
+                grid[x + 2*direction][newy + way] = "1"
+                x,y= x+direction, newy+way
+            except IndexError:
+                break
+            direction = way
             vertical = False
             horizontal = True
             count_vertical = 0
 
-        if direction == 0 and horizontal and count_horizontal >= level:
-            print("koniec")
-            break
+        if horizontal and count_horizontal >= level:
+            rand = random.randint(0, 1)
+            if rand == 0:
+                way = -1
+            else:
+                way = 1
+            # z poziomo na pionowo naroznik
+            try:
+                grid[newx - 1][y] = "1"
+                grid[newx][y] = "1"
+                grid[newx + 1][y] = "1"
+                grid[newx][y + direction] = "1"
+                grid[newx + way][y + direction] = "1"
+                grid[newx + way][y + 2 * direction] = "1"
+                x, y = newx + way, y + direction
+            except IndexError:
+                break
+            direction = way
+            vertical = True
+            horizontal = False
+            count_horizontal = 0
+    return grid
+
+def map_initialization(width, height, path_length=30, path_level=10):
+    layout = [["0" for _ in range(width)] for _ in range(height)]
+
+    for _ in range(6):
+        layout = generate_path(layout, width, height, path_length, path_level)
 
     for i in range(height):
         for j in range(width):
-            print(grid[i][j], end="")
+            print(layout[i][j], end="")
         print()
 
-generate_pattern()
+map_initialization(50,50)

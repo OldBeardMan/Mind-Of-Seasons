@@ -1,4 +1,5 @@
 import random
+import os
 
 def generate_path(grid, width, height, path_length, level):
 
@@ -84,15 +85,17 @@ def generate_path(grid, width, height, path_length, level):
             count_horizontal = 0
     return grid
 
-def map_initialization(width, height, path_length=30, path_level=10):
-    layout = [["0" for _ in range(width)] for _ in range(height)]
+def save_map_to_file(grid, filename):
+    with open(filename, "w") as file:
+        for row in grid:
+            line = ''.join(str(cell) for cell in row)
+            file.write(line + "\n")
 
-    for _ in range(6):
-        layout = generate_path(layout, width, height, path_length, path_level)
+def map_initialization(width, height, file="map.txt" , path_length=30, path_level=10, paths_number=6):
+    if not os.path.isfile(file):
+        layout = [["0" for _ in range(width)] for _ in range(height)]
 
-    for i in range(height):
-        for j in range(width):
-            print(layout[i][j], end="")
-        print()
+        for _ in range(paths_number):
+            layout = generate_path(layout, width, height, path_length, path_level)
 
-map_initialization(50,50)
+        save_map_to_file(layout, file)

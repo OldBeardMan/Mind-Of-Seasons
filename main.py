@@ -1,4 +1,6 @@
 import pygame
+
+from map_generator import map_initialization
 from player import Player
 from background import Background
 from camera import calculate_camera_offset
@@ -15,6 +17,7 @@ pygame.display.set_caption("Swędząca dupa xddddd")
 
 # Tworzenie instancji gracza i tła
 map_width, map_height = 50, 50  # Większa mapa niż ekran
+map_initialization(map_width, map_height)
 background = Background(map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE)
 inventory=Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)

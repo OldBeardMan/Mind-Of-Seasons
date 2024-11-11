@@ -80,9 +80,10 @@ class Background:
         for y in range(len(self.map_data)):
             for x in range(len(self.map_data[y])):
                 if self.map_data[y][x] == 'grass' and self.is_isolated_grass(x, y):
-                    # Randomly select a tree image index
-                    tree_image_index = random.choice(range(len(self.tree_images)))
-                    tree_positions.append((x, y, tree_image_index))
+                    # Dodaj drzewo z rzadkością
+                    if random.random() < 0.5:
+                        tree_image_index = random.choice(range(len(self.tree_images)))
+                        tree_positions.append((x, y, tree_image_index))
         return tree_positions
 
     def is_isolated_grass(self, x, y):

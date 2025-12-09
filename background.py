@@ -1,8 +1,6 @@
 import pygame
 import random
 
-#TODO Zrobić tą zasraną kolizje z drzewami
-
 # Constants
 TILE_SIZE = 64
 TREE_SIZE = 128
@@ -56,6 +54,33 @@ class Background:
         self.map_data = self.load_map_from_file(map_file)
         self.tree_positions = self.generate_tree_positions()
         self.cat_positions = self.generate_cat_positions()  # Add cat positions
+        self.tree_collision_rects = self.generate_tree_collision_rects()
+
+    def generate_tree_collision_rects(self):
+        """Generuje prostokąty kolizji dla pni drzew (dolna część drzewa)"""
+        collision_rects = []
+        trunk_width = 30  # Szerokość pnia
+        trunk_height = 40  # Wysokość pnia
+
+        for x, y, tree_image_index in self.tree_positions:
+            # Pozycja drzewa na mapie (w pikselach)
+            tree_x = x * self.tile_size - (TREE_SIZE - TILE_SIZE) // 2
+            tree_y = y * self.tile_size - (TREE_SIZE - TILE_SIZE) // 2
+
+            # Hitbox pnia - wycentrowany na dole drzewa
+            trunk_x = tree_x + (TREE_SIZE - trunk_width) // 2
+            trunk_y = tree_y + TREE_SIZE - trunk_height - 10  # 10px od dołu
+
+            collision_rects.append(pygame.Rect(trunk_x, trunk_y, trunk_width, trunk_height))
+
+        return collision_rects
+
+    def check_tree_collision(self, player_rect):
+        """Sprawdza czy gracz koliduje z jakimkolwiek pniem drzewa"""
+        for tree_rect in self.tree_collision_rects:
+            if player_rect.colliderect(tree_rect):
+                return True
+        return False
 
     def load_map_from_file(self, map_file):
         map_data = []
@@ -132,17 +157,33 @@ class Background:
 
     def generate_cat_positions(self):
         cat_positions = []
-        available_positions = [
-            (x, y) for y in range(len(self.map_data))
-            for x in range(len(self.map_data[y]))
-            if self.map_data[y][x] == 'grass'  # Only grass tiles
-        ]
+
+        # Zbierz pozycje drzew jako set dla szybkiego sprawdzania
+        tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
+
+        # Znajdź pozycje na trawie, które NIE mają drzew i są blisko ścieżki (dostępne)
+        available_positions = []
+        for y in range(len(self.map_data)):
+            for x in range(len(self.map_data[y])):
+                if self.map_data[y][x] == 'grass' and (x, y) not in tree_tiles:
+                    # Sprawdź czy jest blisko ścieżki (w promieniu 2 kafelków)
+                    near_path = False
+                    for dy in range(-2, 3):
+                        for dx in range(-2, 3):
+                            nx, ny = x + dx, y + dy
+                            if 0 <= nx < len(self.map_data[0]) and 0 <= ny < len(self.map_data):
+                                if self.map_data[ny][nx] == 'path':
+                                    near_path = True
+                                    break
+                        if near_path:
+                            break
+                    if near_path:
+                        available_positions.append((x, y))
 
         # Randomly select three positions for cats
-        selected_positions = random.sample(available_positions, k=3) if len(available_positions) >= 3 else available_positions
+        selected_positions = random.sample(available_positions, k=min(3, len(available_positions)))
 
         for x, y in selected_positions:
-            # Randomly select a cat image index for each position
             cat_image_index = random.choice(range(len(self.cat_images)))
             cat_positions.append((x, y, cat_image_index))
 

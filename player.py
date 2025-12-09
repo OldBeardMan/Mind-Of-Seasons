@@ -27,10 +27,10 @@ class Player:
         self.map_position = [10, 10]  # Pozycja gracza na mapie (w kafelkach)
         self.player_rect = self.image_idle.get_rect(center=(screen_width // 2, screen_height // 2))
         
-    def update(self, keys, clock, npc):
+    def update(self, keys, clock, npc, background=None):
         self.is_walking = False
         new_position = self.player_rect.copy()
-        
+
         # Ruch poziomy
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             new_position.x += self.speed
@@ -41,8 +41,11 @@ class Player:
             self.is_walking = True
             self.facing_right = False
 
-        # Kolizja ze sprytkiem w poziomie
-        if not new_position.colliderect(npc.sprytek_rect):
+        # Kolizja ze sprytkiem i drzewami w poziomie
+        can_move_x = not new_position.colliderect(npc.sprytek_rect)
+        if can_move_x and background:
+            can_move_x = not background.check_tree_collision(new_position)
+        if can_move_x:
             self.player_rect.x = new_position.x
 
         # Ruch pionowy
@@ -54,8 +57,11 @@ class Player:
             new_position.y += self.speed
             self.is_walking = True
 
-        # Kolizja ze sprytkiem w pionie
-        if not new_position.colliderect(npc.sprytek_rect):
+        # Kolizja ze sprytkiem i drzewami w pionie
+        can_move_y = not new_position.colliderect(npc.sprytek_rect)
+        if can_move_y and background:
+            can_move_y = not background.check_tree_collision(new_position)
+        if can_move_y:
             self.player_rect.y = new_position.y
 
         # Aktualizacja pozycji gracza na mapie (w kafelkach)

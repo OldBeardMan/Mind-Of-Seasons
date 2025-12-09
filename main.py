@@ -1,5 +1,28 @@
 import pygame
 
+"""
+TODO Lista rzeczy do zrobienia:
+====================================
+1. [x] Kolizje z drzewami - DONE
+2. [x] Kotki spawnują się tylko w dostępnych miejscach (nie na drzewach) - DONE
+3. [ ] System dialogu ze Sprytkiem:
+       - Wyświetlanie tekstu w dymku
+       - Możliwość interakcji (klawisz np. F)
+       - Różne dialogi/questy
+4. [ ] Zbieranie kotków do ekwipunku:
+       - Podejście do kotka + klawisz interakcji
+       - Kotki znikają z mapy po zebraniu
+       - Wyświetlanie zebranych kotków w inventory
+5. [ ] Baza/Domek gracza:
+       - Grafika domku na mapie
+       - Strefa oddawania kotków
+       - Licznik zebranych kotków
+6. [ ] UI ekwipunku:
+       - Sloty na kotki
+       - Podgląd zebranych kotków
+====================================
+"""
+
 from map_generator import map_initialization
 from player import Player
 from background import Background
@@ -35,7 +58,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     # Aktualizacja gracza
-    player.update(keys, clock,npc)
+    player.update(keys, clock, npc, background)
 
     # Oblicz przesunięcie kamery
     camera_offset = calculate_camera_offset(player, map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)

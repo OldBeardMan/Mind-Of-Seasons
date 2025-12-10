@@ -1,29 +1,4 @@
 import pygame
-
-"""
-TODO Lista rzeczy do zrobienia:
-====================================
-1. [x] Kolizje z drzewami - DONE
-2. [x] Kotki spawnują się tylko w dostępnych miejscach (nie na drzewach) - DONE
-3. [x] System dialogu ze Sprytkiem - DONE:
-       - [x] Wyświetlanie tekstu w dymku
-       - [x] Możliwość interakcji (klawisz F)
-       - [x] Różne dialogi/questy
-4. [x] Zbieranie kotków do ekwipunku - DONE:
-       - [x] Podejście do kotka + klawisz interakcji (F)
-       - [x] Kotki znikają z mapy po zebraniu
-       - [x] Wyświetlanie zebranych kotków w inventory
-5. [ ] Baza/Domek gracza:
-       - Grafika domku na mapie
-       - Strefa oddawania kotków
-       - Licznik zebranych kotków
-6. [x] UI ekwipunku - DONE:
-       - [x] Sloty na kotki
-       - [x] Podgląd zebranych kotków
-       - [x] Licznik kotków na ekranie
-====================================
-"""
-
 from map_generator import map_initialization
 from player import Player
 from background import Background

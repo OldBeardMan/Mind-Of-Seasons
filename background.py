@@ -189,6 +189,40 @@ class Background:
 
         return cat_positions
 
+    def get_cat_rects(self):
+        """Zwraca listę prostokątów kolizji dla kotków"""
+        cat_rects = []
+        cat_size = TREE_SIZE // 2  # Rozmiar kotka
+        for x, y, cat_image_index in self.cat_positions:
+            cat_x = x * self.tile_size - (TREE_SIZE // 4)
+            cat_y = y * self.tile_size - (TREE_SIZE // 4)
+            cat_rect = pygame.Rect(cat_x, cat_y, cat_size, cat_size)
+            cat_rects.append((cat_rect, cat_image_index, (x, y)))
+        return cat_rects
+
+    def check_cat_proximity(self, player_rect):
+        """Sprawdza czy gracz jest blisko jakiegoś kotka i zwraca jego indeks"""
+        proximity_distance = 60  # Dystans do interakcji
+        for i, (x, y, cat_image_index) in enumerate(self.cat_positions):
+            cat_x = x * self.tile_size - (TREE_SIZE // 4) + (TREE_SIZE // 4)  # Środek kotka
+            cat_y = y * self.tile_size - (TREE_SIZE // 4) + (TREE_SIZE // 4)
+
+            # Sprawdź dystans od środka gracza do środka kotka
+            player_center_x = player_rect.centerx
+            player_center_y = player_rect.centery
+
+            distance = ((cat_x - player_center_x) ** 2 + (cat_y - player_center_y) ** 2) ** 0.5
+            if distance < proximity_distance:
+                return i, cat_image_index
+        return None, None
+
+    def collect_cat(self, cat_index):
+        """Usuwa kotka z mapy po zebraniu"""
+        if 0 <= cat_index < len(self.cat_positions):
+            collected_cat = self.cat_positions.pop(cat_index)
+            return collected_cat
+        return None
+
 
 
     def draw_cats(self, screen, camera_offset):

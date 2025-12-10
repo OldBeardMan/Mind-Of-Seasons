@@ -5,21 +5,22 @@ TODO Lista rzeczy do zrobienia:
 ====================================
 1. [x] Kolizje z drzewami - DONE
 2. [x] Kotki spawnują się tylko w dostępnych miejscach (nie na drzewach) - DONE
-3. [ ] System dialogu ze Sprytkiem:
-       - Wyświetlanie tekstu w dymku
-       - Możliwość interakcji (klawisz np. F)
-       - Różne dialogi/questy
-4. [ ] Zbieranie kotków do ekwipunku:
-       - Podejście do kotka + klawisz interakcji
-       - Kotki znikają z mapy po zebraniu
-       - Wyświetlanie zebranych kotków w inventory
+3. [x] System dialogu ze Sprytkiem - DONE:
+       - [x] Wyświetlanie tekstu w dymku
+       - [x] Możliwość interakcji (klawisz F)
+       - [x] Różne dialogi/questy
+4. [x] Zbieranie kotków do ekwipunku - DONE:
+       - [x] Podejście do kotka + klawisz interakcji (F)
+       - [x] Kotki znikają z mapy po zebraniu
+       - [x] Wyświetlanie zebranych kotków w inventory
 5. [ ] Baza/Domek gracza:
        - Grafika domku na mapie
        - Strefa oddawania kotków
        - Licznik zebranych kotków
-6. [ ] UI ekwipunku:
-       - Sloty na kotki
-       - Podgląd zebranych kotków
+6. [x] UI ekwipunku - DONE:
+       - [x] Sloty na kotki
+       - [x] Podgląd zebranych kotków
+       - [x] Licznik kotków na ekranie
 ====================================
 """
 
@@ -46,6 +47,10 @@ player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE)
 inventory=Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
 npc=Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=300, y=400)
 
+# Cooldown zbierania kotków
+collect_cooldown = 0
+f_key_was_pressed = False
+
 # Główna pętla gry
 running = True
 while running:
@@ -57,8 +62,29 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    # Aktualizacja gracza
+    # Aktualizacja gracza i NPC
     player.update(keys, clock, npc, background)
+    npc.update(keys, player)
+
+    # Obsługa cooldownu zbierania
+    if collect_cooldown > 0:
+        collect_cooldown -= 1
+
+    # Sprawdź bliskość kotka i obsłuż zbieranie
+    cat_index, cat_image_index = background.check_cat_proximity(player.player_rect)
+    if cat_index is not None:
+        inventory.set_collect_hint(True)
+        # Zbieranie kotka klawiszem F (tylko gdy nie rozmawiamy z NPC i cooldown minął)
+        if keys[pygame.K_f] and not f_key_was_pressed and not npc.is_talking and collect_cooldown == 0:
+            collected = background.collect_cat(cat_index)
+            if collected:
+                inventory.add_cat(cat_image_index)
+                collect_cooldown = 30  # Cooldown przed następnym zbieraniem
+    else:
+        inventory.set_collect_hint(False)
+
+    # Śledzenie stanu klawisza F dla zbierania
+    f_key_was_pressed = keys[pygame.K_f]
 
     # Oblicz przesunięcie kamery
     camera_offset = calculate_camera_offset(player, map_width, map_height, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -69,7 +95,7 @@ while running:
     background.draw_leaves(screen, camera_offset)
     inventory.update_inventory(keys, screen)
 
-    npc.draw_chat_graphics(screen,player, camera_offset)
+    npc.draw_chat_graphics(screen, player, camera_offset)
 
     # Aktualizacja ekranu
     pygame.display.flip()

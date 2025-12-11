@@ -10,7 +10,7 @@ def load_sprytek():
 
 def load_chat_graphics():
     image_chat=pygame.image.load('Grafiki/UI/dialog.png').convert_alpha()
-    image_chat=pygame.transform.scale(image_chat, (250, 150))
+    image_chat=pygame.transform.scale(image_chat, (350, 200))
     return image_chat
 
 # Sprytek Dialogs
@@ -127,8 +127,8 @@ class Npc:
             chat_position = self.sprytek_position - pygame.math.Vector2(camera_offset)
 
             # Offset the chat graphic above Sprytek for better visibility
-            chat_position.y -= 120
-            chat_position.x -= 95  # Wycentruj dymek nad sprytkiem
+            chat_position.y -= 170
+            chat_position.x -= 145  # Wycentruj dymek nad sprytkiem
 
             # Draw the chat graphic at the calculated screen position
             screen.blit(self.chat_graphics, chat_position)
@@ -145,9 +145,9 @@ class Npc:
 
     def _draw_dialog_text(self, screen, text, chat_position):
         # Pozycja tekstu wewnątrz dymku
-        text_x = chat_position.x + 20
-        text_y = chat_position.y + 40
-        max_width = 210
+        text_x = chat_position.x + 90
+        text_y = chat_position.y + 60
+        max_width = 220
 
         # Łamanie tekstu na linie
         words = text.split(' ')

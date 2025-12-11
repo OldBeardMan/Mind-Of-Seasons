@@ -15,7 +15,7 @@ clock = pygame.time.Clock()
 pygame.display.set_caption("Mind of Seasons")
 
 # Initialize map and get cat/spawn positions
-MAP_WIDTH, MAP_HEIGHT = 50, 50
+MAP_WIDTH, MAP_HEIGHT = 100, 100
 cat_positions, spawn_point = map_initialization(MAP_WIDTH, MAP_HEIGHT, num_cats=5)
 
 # Fallback values if map data is missing

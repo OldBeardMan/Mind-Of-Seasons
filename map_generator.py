@@ -73,6 +73,16 @@ def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
         end = pois[(i + 1) % len(pois)]
         _draw_path(grid, start, end, width, height)
 
+    
+    # Add a few extra connections between cats
+    if len(cat_positions) > 2:
+        extra_connections = random.randint(1, 2)
+        for _ in range(extra_connections):
+            start = random.choice(cat_positions)
+            end = random.choice(cat_positions)
+            if start != end:
+                _draw_path(grid, start, end, width, height)
+
     return grid, cat_positions, spawn_point
 
 

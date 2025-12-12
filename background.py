@@ -56,11 +56,15 @@ class Background:
         self.leaves_timer = 0
         self.leaves_speed = 200
 
+        # Spatial partitioning chunk size (in tiles)
+        self.chunk_size = 16
+
         # Load map and generate elements
         self.map_data = self._load_map(MAP_FILE)
         self.tree_positions = self._generate_trees()
+        self.tree_chunks = self._build_tree_chunks()
+        self.collision_chunks = self._build_collision_chunks()
         self.cat_positions = self._setup_cats(cat_positions) if cat_positions else self._generate_cats()
-        self.tree_collision_rects = self._generate_tree_collisions()
 
     def _load_map(self, filename):
         """Load map from file."""
@@ -92,9 +96,21 @@ class Background:
                         trees.append((x, y, tree_idx))
         return trees
 
-    def _generate_tree_collisions(self):
-        """Generate collision rectangles for tree trunks."""
-        rects = []
+    def _build_tree_chunks(self):
+        """Build spatial chunks for trees."""
+        chunks = {}
+        for x, y, tree_idx in self.tree_positions:
+            chunk_x = x // self.chunk_size
+            chunk_y = y // self.chunk_size
+            key = (chunk_x, chunk_y)
+            if key not in chunks:
+                chunks[key] = []
+            chunks[key].append((x, y, tree_idx))
+        return chunks
+
+    def _build_collision_chunks(self):
+        """Build spatial chunks for tree collision rects."""
+        chunks = {}
         trunk_width, trunk_height = 30, 40
 
         for x, y, _ in self.tree_positions:
@@ -102,9 +118,15 @@ class Background:
             tree_y = y * self.tile_size - (TREE_SIZE - TILE_SIZE) // 2
             trunk_x = tree_x + (TREE_SIZE - trunk_width) // 2
             trunk_y = tree_y + TREE_SIZE - trunk_height - 10
-            rects.append(pygame.Rect(trunk_x, trunk_y, trunk_width, trunk_height))
+            rect = pygame.Rect(trunk_x, trunk_y, trunk_width, trunk_height)
 
-        return rects
+            chunk_x = x // self.chunk_size
+            chunk_y = y // self.chunk_size
+            key = (chunk_x, chunk_y)
+            if key not in chunks:
+                chunks[key] = []
+            chunks[key].append(rect)
+        return chunks
 
     def _setup_cats(self, positions):
         """Setup cats at predefined positions."""
@@ -146,10 +168,22 @@ class Background:
         return cats
 
     def check_tree_collision(self, player_rect):
-        """Check if player collides with any tree trunk."""
-        for rect in self.tree_collision_rects:
-            if player_rect.colliderect(rect):
-                return True
+        """Check if player collides with any tree trunk (using spatial chunks)."""
+        # Get player position in tile coordinates
+        player_tile_x = player_rect.centerx // self.tile_size
+        player_tile_y = player_rect.centery // self.tile_size
+
+        # Check only nearby chunks (player chunk and adjacent)
+        chunk_x = player_tile_x // self.chunk_size
+        chunk_y = player_tile_y // self.chunk_size
+
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
+                key = (chunk_x + dx, chunk_y + dy)
+                if key in self.collision_chunks:
+                    for rect in self.collision_chunks[key]:
+                        if player_rect.colliderect(rect):
+                            return True
         return False
 
     def check_cat_proximity(self, player_rect):
@@ -171,20 +205,41 @@ class Background:
         return None
 
     def draw_base_map(self, screen, camera_offset):
-        """Draw grass and path tiles."""
-        for y, row in enumerate(self.map_data):
-            for x, tile in enumerate(row):
+        """Draw grass and path tiles (only visible ones)."""
+        # Calculate visible tile range
+        start_x = max(0, camera_offset[0] // self.tile_size)
+        start_y = max(0, camera_offset[1] // self.tile_size)
+        end_x = min(len(self.map_data[0]) if self.map_data else 0,
+                    (camera_offset[0] + self.screen_width) // self.tile_size + 2)
+        end_y = min(len(self.map_data),
+                    (camera_offset[1] + self.screen_height) // self.tile_size + 2)
+
+        for y in range(start_y, end_y):
+            row = self.map_data[y]
+            for x in range(start_x, min(end_x, len(row))):
+                tile = row[x]
                 pos = (x * self.tile_size - camera_offset[0],
                        y * self.tile_size - camera_offset[1])
                 img = self.path_image if tile == 'path' else self.tile_image
                 screen.blit(img, pos)
 
     def draw_trees(self, screen, camera_offset):
-        """Draw trees layer."""
-        for x, y, tree_idx in self.tree_positions:
-            pos = (x * self.tile_size - camera_offset[0] - (TREE_SIZE - TILE_SIZE) // 2,
-                   y * self.tile_size - camera_offset[1] - (TREE_SIZE - TILE_SIZE) // 2)
-            screen.blit(self.tree_images[tree_idx], pos)
+        """Draw trees layer (only visible chunks)."""
+        # Calculate visible chunk range
+        start_chunk_x = (camera_offset[0] // self.tile_size) // self.chunk_size - 1
+        start_chunk_y = (camera_offset[1] // self.tile_size) // self.chunk_size - 1
+        end_chunk_x = ((camera_offset[0] + self.screen_width) // self.tile_size) // self.chunk_size + 2
+        end_chunk_y = ((camera_offset[1] + self.screen_height) // self.tile_size) // self.chunk_size + 2
+
+        for chunk_y in range(start_chunk_y, end_chunk_y):
+            for chunk_x in range(start_chunk_x, end_chunk_x):
+                key = (chunk_x, chunk_y)
+                if key not in self.tree_chunks:
+                    continue
+                for x, y, tree_idx in self.tree_chunks[key]:
+                    pos = (x * self.tile_size - camera_offset[0] - (TREE_SIZE - TILE_SIZE) // 2,
+                           y * self.tile_size - camera_offset[1] - (TREE_SIZE - TILE_SIZE) // 2)
+                    screen.blit(self.tree_images[tree_idx], pos)
 
     def draw_cats(self, screen, camera_offset):
         """Draw cats layer."""

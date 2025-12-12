@@ -1,5 +1,6 @@
 import random
 import os
+import math
 from noise import pnoise2
 
 
@@ -27,9 +28,10 @@ def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
     margin = 4
     cat_positions = []
 
-    # Calculate sector grid (3x2 for 5-6 cats)
-    cols = 3
-    rows = 2
+    # Calculate sector grid dynamically based on num_cats
+    grid_size = max(3, int(math.ceil(math.sqrt(num_cats * 1.5))))
+    cols = grid_size
+    rows = grid_size
     sector_width = (width - 2 * margin) // cols
     sector_height = (height - 2 * margin) // rows
 

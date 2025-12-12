@@ -56,7 +56,7 @@ def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
                 noise_val = noise_map[y][x]
                 if noise_val > best_noise:
                     best_noise = noise_val
-                    best_epos = (x, y)
+                    best_pos = (x, y)
 
         if best_pos:
             cat_positions.append(best_pos)

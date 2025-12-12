@@ -56,7 +56,7 @@ def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
                 noise_val = noise_map[y][x]
                 if noise_val > best_noise:
                     best_noise = noise_val
-                    best_pos = (x, y)
+                    best_epos = (x, y)
 
         if best_pos:
             cat_positions.append(best_pos)
@@ -72,15 +72,6 @@ def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
         start = pois[i]
         end = pois[(i + 1) % len(pois)]
         _draw_path(grid, start, end, width, height)
-
-    # Add a few extra connections between cats
-    if len(cat_positions) > 2:
-        extra_connections = random.randint(1, 2)
-        for _ in range(extra_connections):
-            start = random.choice(cat_positions)
-            end = random.choice(cat_positions)
-            if start != end:
-                _draw_path(grid, start, end, width, height)
 
     return grid, cat_positions, spawn_point
 

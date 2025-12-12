@@ -194,14 +194,20 @@ class Background:
             screen.blit(self.cat_images[cat_idx], pos)
 
     def draw_leaves(self, screen, camera_offset):
-        """Draw animated leaves overlay."""
+        """Draw animated leaves overlay only in visible area."""
         current_time = pygame.time.get_ticks()
         if current_time - self.leaves_timer > self.leaves_speed:
             self.leaves_frame = (self.leaves_frame + 1) % len(self.leaves_animation)
             self.leaves_timer = current_time
 
-        for y in range(0, self.map_height * self.tile_size, self.leaves_size):
-            for x in range(0, self.map_width * self.tile_size, self.leaves_size):
+        # Calculate visible area bounds
+        start_x = (camera_offset[0] // self.leaves_size) * self.leaves_size
+        start_y = (camera_offset[1] // self.leaves_size) * self.leaves_size
+        end_x = camera_offset[0] + self.screen_width + self.leaves_size
+        end_y = camera_offset[1] + self.screen_height + self.leaves_size
+
+        for y in range(start_y, end_y, self.leaves_size):
+            for x in range(start_x, end_x, self.leaves_size):
                 pos = (x - camera_offset[0], y - camera_offset[1])
                 screen.blit(self.leaves_animation[self.leaves_frame], pos)
 

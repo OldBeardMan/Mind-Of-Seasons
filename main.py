@@ -39,7 +39,7 @@ def init_game():
     npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=npc_x, y=npc_y)
 
     # Enemies spawn on paths
-    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=20)
+    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=100)
 
     return background, player, inventory, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 

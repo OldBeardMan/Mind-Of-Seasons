@@ -1,13 +1,7 @@
 import pygame
-from map_generator import map_initialization
-from player import Player
-from background import Background
-from camera import calculate_camera_offset
-from inventory import Inventory
-from npc import Npc
-from enemy import EnemyManager
-from lore_display import LoreDisplay
-from lore_data import CATS_LORE, COLLECTIBLES_LORE
+from src.world import map_initialization, Background, calculate_camera_offset
+from src.entities import Player, Npc, EnemyManager
+from src.ui import Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE
 
 # Initialize Pygame
 pygame.init()

@@ -1,6 +1,6 @@
 import pygame
-from lore_display import create_placeholder
-from lore_data import CATS_LORE, COLLECTIBLES_LORE
+from src.ui.lore_display import create_placeholder
+from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
 
 def load_inventory_graphics(screen_width, screen_height):
     image_inventory = pygame.image.load('Grafiki/UI/Slot.png').convert_alpha()

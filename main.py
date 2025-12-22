@@ -1,5 +1,5 @@
 import pygame
-from src.world import map_initialization, Background, calculate_camera_offset
+from src.world import map_initialization, Background, calculate_camera_offset, Cabin
 from src.entities import Player, Npc, EnemyManager
 from src.ui import Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE
 
@@ -30,19 +30,25 @@ def init_game():
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
     lore_display = LoreDisplay(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-    # NPC spawns near player
-    npc_x = (spawn_point[0] + 3) * TILE_SIZE
-    npc_y = (spawn_point[1] + 2) * TILE_SIZE
-    npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=npc_x, y=npc_y)
+    # Create cabin at spawn point
+    cabin = Cabin(spawn_point[0], spawn_point[1], TILE_SIZE)
+
+    # Clear trees around cabin
+    cabin_bounds = cabin.get_bounds()
+    background.clear_trees_in_area(*cabin_bounds)
+
+    # NPC (Sprytek) spawns in front of cabin
+    sprytek_pos = cabin.get_sprytek_position()
+    npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=sprytek_pos[0], y=sprytek_pos[1])
 
     # Enemies spawn on paths
     enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=100)
 
-    return background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
+    return background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 
 
 # Initialize game
-background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
 
 # Collection state
 collect_cooldown = 0
@@ -66,7 +72,7 @@ while running:
 
         # Still render background but don't update game logic
         camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
-        background.draw(screen, camera_offset, player)
+        background.draw(screen, camera_offset, player, cabin)
         npc.draw_sprytek(screen, camera_offset)
         enemy_manager.draw(screen, camera_offset)
         background.draw_leaves(screen, camera_offset)
@@ -81,13 +87,13 @@ while running:
         continue
 
     # Update game objects
-    player.update(keys, clock, npc, background)
+    player.update(keys, clock, npc, background, cabin)
     npc.update(keys, player)
     enemy_manager.update()
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):
-        background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+        background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
         collect_cooldown = 0
         f_key_pressed = False
         continue
@@ -133,7 +139,7 @@ while running:
     camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 
     # Render
-    background.draw(screen, camera_offset, player)
+    background.draw(screen, camera_offset, player, cabin)
     npc.draw_sprytek(screen, camera_offset)
     enemy_manager.draw(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)

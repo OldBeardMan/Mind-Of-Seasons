@@ -114,6 +114,16 @@ class Background:
                         trees.append((x, y, tree_idx))
         return trees
 
+    def clear_trees_in_area(self, min_x, min_y, max_x, max_y):
+        """Remove trees in specified area and rebuild chunks."""
+        self.tree_positions = [
+            (x, y, idx) for x, y, idx in self.tree_positions
+            if not (min_x <= x <= max_x and min_y <= y <= max_y)
+        ]
+        # Rebuild chunks
+        self.tree_chunks = self._build_tree_chunks()
+        self.collision_chunks = self._build_collision_chunks()
+
     def _build_tree_chunks(self):
         """Build spatial chunks for trees."""
         chunks = {}
@@ -353,10 +363,16 @@ class Background:
                 pos = (x - camera_offset[0], y - camera_offset[1])
                 screen.blit(self.leaves_animation[self.leaves_frame], pos)
 
-    def draw(self, screen, camera_offset, player):
+    def draw(self, screen, camera_offset, player, cabin=None):
         """Draw all background layers."""
         self.draw_base_map(screen, camera_offset)
+        # Cabin floor (under player)
+        if cabin:
+            cabin.draw_floor(screen, camera_offset)
         player.draw(screen, camera_offset)
         self.draw_trees(screen, camera_offset)
+        # Cabin walls/roof/furniture (over player when inside)
+        if cabin:
+            cabin.draw_upper(screen, camera_offset)
         self.draw_cats(screen, camera_offset)
         self.draw_collectibles(screen, camera_offset)

@@ -1,10 +1,13 @@
 import pygame
 import random
+from src.ui.lore_display import create_placeholder
+from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
 
 # Constants
 TILE_SIZE = 64
 TREE_SIZE = 128
 MAP_FILE = "map.txt"
+COLLECTIBLE_SIZE = 48
 
 
 def load_graphics():
@@ -31,19 +34,33 @@ def load_graphics():
     path_image = pygame.image.load('Grafiki/Landscape/path.png').convert_alpha()
     path_image = pygame.transform.scale(path_image, (TILE_SIZE, TILE_SIZE))
 
-    # Cats
+    # Cats - load existing images or create placeholders for 5 lore cats
     cat_images = []
-    for i in [2, 3, 5]:
-        cat_img = pygame.image.load(f'Grafiki/NPC/Cat{i}.png').convert_alpha()
-        cat_img = pygame.transform.scale(cat_img, (TREE_SIZE // 2, TREE_SIZE // 2))
+    cat_files = {0: 'Cat2.png', 1: 'Cat3.png', 2: 'Cat5.png'}  # Available graphics
+    for i in range(5):
+        if i in cat_files:
+            try:
+                cat_img = pygame.image.load(f'Grafiki/NPC/{cat_files[i]}').convert_alpha()
+                cat_img = pygame.transform.scale(cat_img, (TREE_SIZE // 2, TREE_SIZE // 2))
+            except:
+                cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
+        else:
+            # Create placeholder for cats without graphics
+            cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
         cat_images.append(cat_img)
 
-    return tile_image, leaves_animation, tree_images, path_image, cat_images
+    # Collectibles - all placeholders for now
+    collectible_images = []
+    for item in COLLECTIBLES_LORE:
+        coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
+        collectible_images.append(coll_img)
+
+    return tile_image, leaves_animation, tree_images, path_image, cat_images, collectible_images
 
 
 class Background:
-    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None):
-        self.tile_image, self.leaves_animation, self.tree_images, self.path_image, self.cat_images = load_graphics()
+    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None, collectible_positions=None):
+        self.tile_image, self.leaves_animation, self.tree_images, self.path_image, self.cat_images, self.collectible_images = load_graphics()
         self.map_width = map_width
         self.map_height = map_height
         self.tile_size = tile_size
@@ -65,6 +82,7 @@ class Background:
         self.tree_chunks = self._build_tree_chunks()
         self.collision_chunks = self._build_collision_chunks()
         self.cat_positions = self._setup_cats(cat_positions) if cat_positions else self._generate_cats()
+        self.collectible_positions = self._setup_collectibles(collectible_positions) if collectible_positions else self._generate_collectibles()
 
     def _load_map(self, filename):
         """Load map from file."""
@@ -129,19 +147,21 @@ class Background:
         return chunks
 
     def _setup_cats(self, positions):
-        """Setup cats at predefined positions."""
+        """Setup cats at predefined positions. Each cat gets unique lore index (0-4)."""
         cats = []
         tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
 
-        for x, y in positions:
-            if (x, y) not in tree_tiles:
-                cat_idx = random.randrange(len(self.cat_images))
-                cats.append((x, y, cat_idx))
+        # Only use first 5 positions for lore cats
+        valid_positions = [(x, y) for x, y in positions if (x, y) not in tree_tiles][:5]
+
+        for i, (x, y) in enumerate(valid_positions):
+            # Each cat has unique lore index (0-4)
+            cats.append((x, y, i))
 
         return cats
 
     def _generate_cats(self):
-        """Generate cat positions on paths (fallback)."""
+        """Generate cat positions on paths (fallback). Only 5 lore cats."""
         cats = []
         tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
 
@@ -152,20 +172,62 @@ class Background:
                 if self.map_data[y][x] == 'path' and (x, y) not in tree_tiles:
                     path_positions.append((x, y))
 
-        # Select spread out positions
+        # Select spread out positions for 5 cats
         selected = []
-        for _ in range(100):
-            if len(selected) >= 3 or not path_positions:
+        for _ in range(500):
+            if len(selected) >= 5 or not path_positions:
                 break
             pos = random.choice(path_positions)
-            if all(abs(pos[0] - p[0]) + abs(pos[1] - p[1]) >= 8 for p in selected):
+            if all(abs(pos[0] - p[0]) + abs(pos[1] - p[1]) >= 15 for p in selected):
                 selected.append(pos)
 
-        for x, y in selected:
-            cat_idx = random.randrange(len(self.cat_images))
-            cats.append((x, y, cat_idx))
+        # Each cat gets unique lore index (0-4)
+        for i, (x, y) in enumerate(selected):
+            cats.append((x, y, i))
 
         return cats
+
+    def _setup_collectibles(self, positions):
+        """Setup collectibles at predefined positions."""
+        collectibles = []
+        tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
+        cat_tiles = set((x, y) for x, y, _ in self.cat_positions)
+
+        valid_positions = [(x, y) for x, y in positions if (x, y) not in tree_tiles and (x, y) not in cat_tiles][:10]
+
+        for i, (x, y) in enumerate(valid_positions):
+            collectibles.append((x, y, i))
+
+        return collectibles
+
+    def _generate_collectibles(self):
+        """Generate collectible positions on paths (fallback). 10 items."""
+        collectibles = []
+        tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
+        cat_tiles = set((x, y) for x, y, _ in self.cat_positions)
+
+        # Find all path positions not occupied
+        path_positions = []
+        for y in range(len(self.map_data)):
+            for x in range(len(self.map_data[y])):
+                if self.map_data[y][x] == 'path' and (x, y) not in tree_tiles and (x, y) not in cat_tiles:
+                    path_positions.append((x, y))
+
+        # Select spread out positions for 10 collectibles
+        selected = []
+        for _ in range(1000):
+            if len(selected) >= 10 or not path_positions:
+                break
+            pos = random.choice(path_positions)
+            # Ensure spacing from other collectibles and cats
+            if all(abs(pos[0] - p[0]) + abs(pos[1] - p[1]) >= 12 for p in selected):
+                if all(abs(pos[0] - c[0]) + abs(pos[1] - c[1]) >= 8 for c in [(cx, cy) for cx, cy, _ in self.cat_positions]):
+                    selected.append(pos)
+
+        for i, (x, y) in enumerate(selected):
+            collectibles.append((x, y, i))
+
+        return collectibles
 
     def check_tree_collision(self, player_rect):
         """Check if player collides with any tree trunk (using spatial chunks)."""
@@ -202,6 +264,24 @@ class Background:
         """Remove cat from map after collection."""
         if 0 <= index < len(self.cat_positions):
             return self.cat_positions.pop(index)
+        return None
+
+    def check_collectible_proximity(self, player_rect):
+        """Check if player is near a collectible. Returns (index, collectible_index) or (None, None)."""
+        proximity = 50
+        for i, (x, y, coll_idx) in enumerate(self.collectible_positions):
+            coll_center_x = x * self.tile_size
+            coll_center_y = y * self.tile_size
+            dist = ((coll_center_x - player_rect.centerx) ** 2 +
+                    (coll_center_y - player_rect.centery) ** 2) ** 0.5
+            if dist < proximity:
+                return i, coll_idx
+        return None, None
+
+    def collect_collectible(self, index):
+        """Remove collectible from map after collection."""
+        if 0 <= index < len(self.collectible_positions):
+            return self.collectible_positions.pop(index)
         return None
 
     def draw_base_map(self, screen, camera_offset):
@@ -248,6 +328,13 @@ class Background:
                    y * self.tile_size - camera_offset[1] - TREE_SIZE // 4)
             screen.blit(self.cat_images[cat_idx], pos)
 
+    def draw_collectibles(self, screen, camera_offset):
+        """Draw collectibles layer."""
+        for x, y, coll_idx in self.collectible_positions:
+            pos = (x * self.tile_size - camera_offset[0] - COLLECTIBLE_SIZE // 2,
+                   y * self.tile_size - camera_offset[1] - COLLECTIBLE_SIZE // 2)
+            screen.blit(self.collectible_images[coll_idx], pos)
+
     def draw_leaves(self, screen, camera_offset):
         """Draw animated leaves overlay only in visible area."""
         current_time = pygame.time.get_ticks()
@@ -272,3 +359,4 @@ class Background:
         player.draw(screen, camera_offset)
         self.draw_trees(screen, camera_offset)
         self.draw_cats(screen, camera_offset)
+        self.draw_collectibles(screen, camera_offset)

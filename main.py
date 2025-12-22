@@ -1,11 +1,7 @@
 import pygame
-from map_generator import map_initialization
-from player import Player
-from background import Background
-from camera import calculate_camera_offset
-from inventory import Inventory
-from npc import Npc
-from enemy import EnemyManager
+from src.world import map_initialization, Background, calculate_camera_offset
+from src.entities import Player, Npc, EnemyManager
+from src.ui import Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE
 
 # Initialize Pygame
 pygame.init()
@@ -20,7 +16,7 @@ def init_game():
     """Initialize or restart the game."""
     # Initialize map and get cat/spawn positions
     MAP_WIDTH, MAP_HEIGHT = 1000, 1000
-    cat_positions, spawn_point = map_initialization(MAP_WIDTH, MAP_HEIGHT, num_cats=50)
+    cat_positions, spawn_point = map_initialization(MAP_WIDTH, MAP_HEIGHT, num_cats=5)
 
     # Fallback values if map data is missing
     if spawn_point is None:
@@ -32,6 +28,7 @@ def init_game():
     background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, cat_positions)
     player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, spawn_position=spawn_point)
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
+    lore_display = LoreDisplay(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     # NPC spawns near player
     npc_x = (spawn_point[0] + 3) * TILE_SIZE
@@ -41,13 +38,13 @@ def init_game():
     # Enemies spawn on paths
     enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=100)
 
-    return background, player, inventory, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
+    return background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 
 
 # Initialize game
-background, player, inventory, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
 
-# Cat collection state
+# Collection state
 collect_cooldown = 0
 f_key_pressed = False
 
@@ -63,6 +60,26 @@ while running:
 
     keys = pygame.key.get_pressed()
 
+    # If lore display is showing, only update that and block other input
+    if lore_display.is_showing:
+        lore_display.update(keys)
+
+        # Still render background but don't update game logic
+        camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
+        background.draw(screen, camera_offset, player)
+        npc.draw_sprytek(screen, camera_offset)
+        enemy_manager.draw(screen, camera_offset)
+        background.draw_leaves(screen, camera_offset)
+        inventory.update_inventory(keys, screen)
+        npc.draw_chat_graphics(screen, player, camera_offset)
+
+        # Draw lore display on top
+        lore_display.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(60)
+        continue
+
     # Update game objects
     player.update(keys, clock, npc, background)
     npc.update(keys, player)
@@ -70,12 +87,12 @@ while running:
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):
-        background, player, inventory, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+        background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
         collect_cooldown = 0
         f_key_pressed = False
         continue
 
-    # Cat collection cooldown
+    # Collection cooldown
     if collect_cooldown > 0:
         collect_cooldown -= 1
 
@@ -83,14 +100,32 @@ while running:
     cat_index, cat_image_index = background.check_cat_proximity(player.player_rect)
     if cat_index is not None:
         inventory.set_collect_hint(True)
+        inventory.set_collectible_hint(False)
         # Collect cat with F key (not during NPC dialogue, with cooldown)
         if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
             collected = background.collect_cat(cat_index)
             if collected:
                 inventory.add_cat(cat_image_index)
+                # Show lore for collected cat
+                lore_display.show_lore(CATS_LORE[cat_image_index], background.cat_images[cat_image_index])
                 collect_cooldown = 30
     else:
         inventory.set_collect_hint(False)
+
+        # Check collectible proximity
+        coll_index, coll_item_index = background.check_collectible_proximity(player.player_rect)
+        if coll_index is not None:
+            inventory.set_collectible_hint(True)
+            # Collect item with F key (not during NPC dialogue, with cooldown)
+            if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
+                collected = background.collect_collectible(coll_index)
+                if collected:
+                    inventory.add_collectible(coll_item_index)
+                    # Show lore for collected item
+                    lore_display.show_lore(COLLECTIBLES_LORE[coll_item_index], background.collectible_images[coll_item_index])
+                    collect_cooldown = 30
+        else:
+            inventory.set_collectible_hint(False)
 
     f_key_pressed = keys[pygame.K_f]
 

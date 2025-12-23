@@ -373,6 +373,6 @@ class Background:
         self.draw_trees(screen, camera_offset)
         # Cabin walls/roof/furniture (over player when inside)
         if cabin:
-            cabin.draw_upper(screen, camera_offset)
+            cabin.draw_upper(screen, camera_offset, self.cat_images)
         self.draw_cats(screen, camera_offset)
         self.draw_collectibles(screen, camera_offset)

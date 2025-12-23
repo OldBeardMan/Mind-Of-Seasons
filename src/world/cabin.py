@@ -48,7 +48,7 @@ def create_cabin_tiles():
     pygame.draw.circle(door, (180, 150, 80), (TILE_SIZE-14, TILE_SIZE//2), 4)  # Klamka
     tiles['door'] = door
 
-    # Bed - rustic style
+    # Bed - rustic style (2 tiles wide)
     bed = pygame.Surface((TILE_SIZE * 2, TILE_SIZE), pygame.SRCALPHA)
     bed.fill((0, 0, 0, 0))
     # Rama lozka (drewno)
@@ -76,6 +76,19 @@ def create_cabin_tiles():
     pygame.draw.line(coffee, (200, 200, 200), (36, 18), (38, 8), 2)
     tiles['coffee'] = coffee
 
+    # Cat bed/cushion - wygodne legowisko dla kotka
+    cat_bed = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+    cat_bed.fill((0, 0, 0, 0))
+    # Podstawa koszyka
+    pygame.draw.ellipse(cat_bed, (140, 100, 60), (4, 20, 56, 40))
+    # Wnetrze koszyka (miekkie)
+    pygame.draw.ellipse(cat_bed, (180, 150, 120), (10, 26, 44, 28))
+    # Poduszeczka
+    pygame.draw.ellipse(cat_bed, (200, 180, 150), (14, 30, 36, 20))
+    # Obramowanie koszyka
+    pygame.draw.arc(cat_bed, (100, 70, 45), (4, 20, 56, 40), 3.14, 6.28, 3)
+    tiles['cat_bed'] = cat_bed
+
     return tiles
 
 
@@ -84,9 +97,9 @@ class Cabin:
         self.tile_size = tile_size
         self.tiles = create_cabin_tiles()
 
-        # Cabin dimensions (in tiles)
-        self.width = 6  # tiles
-        self.height = 5  # tiles
+        # Cabin dimensions (in tiles) - duza chatka
+        self.width = 10  # tiles
+        self.height = 9  # tiles
 
         # Position cabin so spawn point is in front of door
         # Door is at bottom center of cabin
@@ -95,23 +108,40 @@ class Cabin:
 
         # Define cabin layout (0=floor, 1=wall, 2=door, 3=roof)
         self.layout = [
-            [3, 3, 3, 3, 3, 3],  # Roof (top row - visual only)
-            [1, 0, 0, 0, 0, 1],  # Wall | floor floor floor floor | Wall
-            [1, 0, 0, 0, 0, 1],  # Wall | floor floor floor floor | Wall
-            [1, 0, 0, 0, 0, 1],  # Wall | floor floor floor floor | Wall
-            [1, 1, 2, 2, 1, 1],  # Wall Wall Door Door Wall Wall
+            [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # Roof
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # Wall | floor x8 | Wall
+            [1, 1, 1, 1, 2, 2, 1, 1, 1, 1],  # Wall x4 Door Door Wall x4
         ]
 
         # Furniture positions (relative to cabin top-left, in tiles)
-        self.bed_pos = (1, 1)      # Top-left inside
-        self.coffee_pos = (4, 1)   # Top-right inside
+        self.bed_pos = (1, 1)      # Top-left inside (2 tiles wide)
+        self.coffee_pos = (8, 1)   # Top-right inside
 
-        # Build collision rects for walls
+        # Build collision rects for walls AND furniture
         self.wall_rects = self._build_wall_collisions()
+        self.furniture_rects = self._build_furniture_collisions()
 
         # Sprytek position (in front of door, to the left)
         self.sprytek_tile_x = spawn_x - 1
         self.sprytek_tile_y = spawn_y + 1
+
+        # Storage system - tylko kotki (na legowiskach)
+        self.stored_cats = []  # Lista indeksów przechowywanych kotków
+
+        # Pozycje legowisk dla kotków (5 legowisk pod górną ścianą)
+        self.cat_bed_positions = [
+            (3, 2),   # Pod ścianą - lewo
+            (4, 2),   # Pod ścianą - środek-lewo
+            (5, 2),   # Pod ścianą - środek
+            (6, 2),   # Pod ścianą - środek-prawo
+            (7, 2),   # Pod ścianą - prawo
+        ]
 
     def _build_wall_collisions(self):
         """Build collision rectangles for walls."""
@@ -128,10 +158,36 @@ class Cabin:
                     rects.append(pygame.Rect(world_x, world_y, self.tile_size, self.tile_size))
         return rects
 
+    def _build_furniture_collisions(self):
+        """Build collision rectangles for furniture (bed, coffee, cat beds)."""
+        rects = []
+        # Bed collision (2 tiles wide)
+        bed_x = (self.x + self.bed_pos[0]) * self.tile_size
+        bed_y = (self.y + self.bed_pos[1]) * self.tile_size
+        rects.append(pygame.Rect(bed_x, bed_y, self.tile_size * 2, self.tile_size))
+
+        # Coffee/kettle collision
+        coffee_x = (self.x + self.coffee_pos[0]) * self.tile_size
+        coffee_y = (self.y + self.coffee_pos[1]) * self.tile_size
+        rects.append(pygame.Rect(coffee_x, coffee_y, self.tile_size, self.tile_size))
+
+        # Cat beds collision
+        for (bx, by) in self.cat_bed_positions:
+            cat_bed_x = (self.x + bx) * self.tile_size
+            cat_bed_y = (self.y + by) * self.tile_size
+            rects.append(pygame.Rect(cat_bed_x, cat_bed_y, self.tile_size, self.tile_size))
+
+        return rects
+
     def check_collision(self, player_rect):
-        """Check if player collides with cabin walls."""
+        """Check if player collides with cabin walls or furniture."""
+        # Check walls
         for wall_rect in self.wall_rects:
             if player_rect.colliderect(wall_rect):
+                return True
+        # Check furniture
+        for furn_rect in self.furniture_rects:
+            if player_rect.colliderect(furn_rect):
                 return True
         return False
 
@@ -142,6 +198,30 @@ class Cabin:
     def get_bounds(self):
         """Get cabin bounding box in tile coordinates (for tree removal)."""
         return (self.x - 1, self.y - 1, self.x + self.width + 1, self.y + self.height + 2)
+
+    def is_player_inside(self, player_rect):
+        """Check if player is inside the cabin (on floor tiles)."""
+        # Wewnętrzny obszar chatki (bez ścian i dachu)
+        inner_left = (self.x + 1) * self.tile_size
+        inner_right = (self.x + self.width - 1) * self.tile_size
+        inner_top = (self.y + 1) * self.tile_size
+        inner_bottom = (self.y + self.height - 1) * self.tile_size
+
+        cabin_interior = pygame.Rect(inner_left, inner_top,
+                                      inner_right - inner_left,
+                                      inner_bottom - inner_top)
+        return cabin_interior.colliderect(player_rect)
+
+    def store_cat(self, cat_index):
+        """Store a cat in the cabin. Returns True if successful."""
+        if len(self.stored_cats) < 5 and cat_index not in self.stored_cats:
+            self.stored_cats.append(cat_index)
+            return True
+        return False
+
+    def get_stored_cat_count(self):
+        """Return count of stored cats."""
+        return len(self.stored_cats)
 
     def draw_floor(self, screen, camera_offset):
         """Draw cabin floor layer (under player)."""
@@ -155,7 +235,7 @@ class Cabin:
                 if tile_type == 0 or tile_type == 2:  # Floor or Door area
                     screen.blit(self.tiles['floor'], (screen_x, screen_y))
 
-    def draw_upper(self, screen, camera_offset):
+    def draw_upper(self, screen, camera_offset, cat_images=None):
         """Draw cabin walls, roof, and furniture (over player)."""
         for row_idx, row in enumerate(self.layout):
             for col_idx, tile_type in enumerate(row):
@@ -179,3 +259,17 @@ class Cabin:
         coffee_world_x = (self.x + self.coffee_pos[0]) * self.tile_size
         coffee_world_y = (self.y + self.coffee_pos[1]) * self.tile_size
         screen.blit(self.tiles['coffee'], (coffee_world_x - camera_offset[0], coffee_world_y - camera_offset[1]))
+
+        # Draw cat beds (legowiska pod ścianą)
+        for i, (bx, by) in enumerate(self.cat_bed_positions):
+            bed_world_x = (self.x + bx) * self.tile_size
+            bed_world_y = (self.y + by) * self.tile_size
+            screen.blit(self.tiles['cat_bed'], (bed_world_x - camera_offset[0], bed_world_y - camera_offset[1]))
+
+            # Draw stored cat on this bed if present
+            if cat_images and i < len(self.stored_cats):
+                cat_index = self.stored_cats[i]
+                if cat_index < len(cat_images):
+                    cat_x = bed_world_x + 8
+                    cat_y = bed_world_y - 12
+                    screen.blit(cat_images[cat_index], (cat_x - camera_offset[0], cat_y - camera_offset[1]))

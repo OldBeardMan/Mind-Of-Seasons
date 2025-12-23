@@ -53,6 +53,7 @@ background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_po
 # Collection state
 collect_cooldown = 0
 f_key_pressed = False
+g_key_pressed = False
 
 # Main game loop
 running = True
@@ -76,7 +77,8 @@ while running:
         npc.draw_sprytek(screen, camera_offset)
         enemy_manager.draw(screen, camera_offset)
         background.draw_leaves(screen, camera_offset)
-        inventory.update_inventory(keys, screen)
+        stored_cats = cabin.get_stored_cat_count()
+        inventory.update_inventory(keys, screen, stored_cats)
         npc.draw_chat_graphics(screen, player, camera_offset)
 
         # Draw lore display on top
@@ -96,29 +98,30 @@ while running:
         background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
         collect_cooldown = 0
         f_key_pressed = False
+        g_key_pressed = False
         continue
 
     # Collection cooldown
     if collect_cooldown > 0:
         collect_cooldown -= 1
 
-    # Check cat proximity and handle collection
+    # Check cat proximity and handle picking up (only if not carrying one)
     cat_index, cat_image_index = background.check_cat_proximity(player.player_rect)
-    if cat_index is not None:
+    if cat_index is not None and not inventory.is_carrying_cat():
         inventory.set_collect_hint(True)
         inventory.set_collectible_hint(False)
-        # Collect cat with F key (not during NPC dialogue, with cooldown)
+        # Pick up cat with F key (not during NPC dialogue, with cooldown)
         if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
             collected = background.collect_cat(cat_index)
             if collected:
-                inventory.add_cat(cat_image_index)
-                # Show lore for collected cat
+                inventory.pick_up_cat(cat_image_index)
+                # Show lore for picked up cat
                 lore_display.show_lore(CATS_LORE[cat_image_index], background.cat_images[cat_image_index])
                 collect_cooldown = 30
     else:
         inventory.set_collect_hint(False)
 
-        # Check collectible proximity
+        # Check collectible proximity (items go to inventory)
         coll_index, coll_item_index = background.check_collectible_proximity(player.player_rect)
         if coll_index is not None:
             inventory.set_collectible_hint(True)
@@ -135,6 +138,22 @@ while running:
 
     f_key_pressed = keys[pygame.K_f]
 
+    # Check if player is inside cabin and handle storing cat
+    player_inside_cabin = cabin.is_player_inside(player.player_rect)
+    if player_inside_cabin:
+        inventory.set_storage_hint(True)
+        # Store carried cat with G key
+        if keys[pygame.K_g] and not g_key_pressed and collect_cooldown == 0:
+            if inventory.is_carrying_cat():
+                cat_idx = inventory.put_down_cat()
+                if cat_idx is not None:
+                    cabin.store_cat(cat_idx)
+                collect_cooldown = 30
+    else:
+        inventory.set_storage_hint(False)
+
+    g_key_pressed = keys[pygame.K_g]
+
     # Calculate camera offset
     camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 
@@ -143,7 +162,8 @@ while running:
     npc.draw_sprytek(screen, camera_offset)
     enemy_manager.draw(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)
-    inventory.update_inventory(keys, screen)
+    stored_cats = cabin.get_stored_cat_count()
+    inventory.update_inventory(keys, screen, stored_cats)
     npc.draw_chat_graphics(screen, player, camera_offset)
 
     # Update display

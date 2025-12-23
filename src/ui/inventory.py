@@ -8,7 +8,7 @@ def load_inventory_graphics(screen_width, screen_height):
     return image_inventory
 
 def load_cat_images():
-    """Ładuje obrazki kotków do wyświetlania w inventory (5 lore kotów)"""
+    """Ładuje obrazki kotków do wyświetlania"""
     cat_images = []
     cat_files = {0: 'Cat2.png', 1: 'Cat3.png', 2: 'Cat5.png'}
     for i in range(5):
@@ -41,13 +41,15 @@ class Inventory:
         self.screen_width = screen_width
         self.screen_height = screen_height
 
-        # Lista zebranych kotków (przechowuje indeksy obrazków)
-        self.collected_cats = []
+        # Obrazki kotków (do wyświetlania noszonego kotka)
         self.cat_images = load_cat_images()
 
-        # Lista zebranych znajdziek
+        # Lista zebranych znajdziek (tylko itemy, nie kotki!)
         self.collected_items = []
         self.collectible_images = load_collectible_images()
+
+        # System noszenia kotka na rękach (tylko jeden naraz!)
+        self.carried_cat = None  # Indeks noszonego kotka lub None
 
         # Font do wyświetlania licznika (pixelowy)
         pygame.font.init()
@@ -59,23 +61,43 @@ class Inventory:
         self.show_collectible_hint = False
         self.hint_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 10)
 
-    def add_cat(self, cat_image_index):
-        """Dodaje kotka do inventory"""
-        self.collected_cats.append(cat_image_index)
+        # System przechowywania w chatce
+        self.show_storage_hint = False
+
+    def pick_up_cat(self, cat_index):
+        """Podnosi kotka na ręce. Zwraca True jeśli udało się podnieść."""
+        if self.carried_cat is None:
+            self.carried_cat = cat_index
+            return True
+        return False
+
+    def is_carrying_cat(self):
+        """Sprawdza czy gracz niesie kotka"""
+        return self.carried_cat is not None
+
+    def get_carried_cat(self):
+        """Zwraca indeks noszonego kotka lub None"""
+        return self.carried_cat
+
+    def put_down_cat(self):
+        """Odkłada kotka (do chatki). Zwraca indeks kotka lub None."""
+        cat = self.carried_cat
+        self.carried_cat = None
+        return cat
 
     def add_collectible(self, collectible_index):
         """Dodaje znajdźkę do inventory"""
         self.collected_items.append(collectible_index)
 
-    def get_cat_count(self):
-        """Zwraca liczbę zebranych kotków"""
-        return len(self.collected_cats)
-
     def get_collectible_count(self):
         """Zwraca liczbę zebranych znajdziek"""
         return len(self.collected_items)
 
-    def update_inventory(self, keys, screen):
+    def set_storage_hint(self, show):
+        """Ustawia czy pokazywać podpowiedź odkładania kotka"""
+        self.show_storage_hint = show
+
+    def update_inventory(self, keys, screen, stored_cats=0):
         # Zmienna do śledzenia, czy ekwipunek jest otwarty
         if keys[pygame.K_e] and not self.toggle_pressed:
             self.inventory_open = not self.inventory_open
@@ -84,74 +106,58 @@ class Inventory:
         if not keys[pygame.K_e]:
             self.toggle_pressed = False
 
-        # Rysowanie ekwipunku, jeśli jest otwarty
+        # Rysowanie ekwipunku, jeśli jest otwarty (tylko itemy!)
         if self.inventory_open:
             screen.blit(self.inventory_image, self.inventory_rect)
-            self._draw_collected_cats(screen)
             self._draw_collected_items(screen)
 
         # Zawsze rysuj liczniki w rogu ekranu
-        self._draw_counters(screen)
+        self._draw_counters(screen, stored_cats)
 
-        # Rysuj podpowiedź zbierania jeśli gracz jest blisko kotka/znajdźki
-        if self.show_collect_hint:
+        # Rysuj wskaźnik noszonego kotka
+        if self.carried_cat is not None:
+            self._draw_carried_cat(screen)
+
+        # Rysuj podpowiedź
+        if self.show_collect_hint and self.carried_cat is None:
             self._draw_collect_hint(screen, "cat")
         elif self.show_collectible_hint:
             self._draw_collect_hint(screen, "item")
+        elif self.show_storage_hint and self.carried_cat is not None:
+            self._draw_collect_hint(screen, "storage")
 
-    def _draw_collected_cats(self, screen):
-        """Draw collected cats in inventory (top section)"""
-        # Nagłówek sekcji kotów
-        header = self.small_font.render("CATS", True, (200, 180, 120))
-        header_x = self.inventory_rect.x + 80
-        header_y = self.inventory_rect.y + 60
-        screen.blit(header, (header_x, header_y))
-
-        if not self.collected_cats:
-            empty_text = self.small_font.render("None found", True, (100, 100, 100))
-            screen.blit(empty_text, (header_x, header_y + 25))
+    def _draw_carried_cat(self, screen):
+        """Rysuje wskaźnik noszonego kotka w prawym górnym rogu"""
+        if self.carried_cat is None:
             return
 
-        # Parametry slotów
-        slot_size = 55
-        slots_per_row = 5
-        start_x = self.inventory_rect.x + 80
-        start_y = self.inventory_rect.y + 90
+        padding = 10
+        box_size = 60
 
-        for i, cat_index in enumerate(self.collected_cats):
-            row = i // slots_per_row
-            col = i % slots_per_row
+        # Pozycja w prawym górnym rogu
+        box_x = self.screen_width - box_size - padding
+        box_y = padding
 
-            slot_x = start_x + col * (slot_size + 10)
-            slot_y = start_y + row * (slot_size + 10)
+        # Tło ramki
+        bg_rect = pygame.Rect(box_x, box_y, box_size, box_size)
+        pygame.draw.rect(screen, (60, 50, 40), bg_rect, border_radius=8)
+        pygame.draw.rect(screen, (255, 200, 100), bg_rect, 3, border_radius=8)
 
-            # Rysuj ramkę slotu
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-            pygame.draw.rect(screen, (80, 60, 40), slot_rect, 3, border_radius=5)
-
-            # Rysuj kotka w slocie
-            cat_img = self.cat_images[cat_index]
-            cat_rect = cat_img.get_rect(center=slot_rect.center)
-            screen.blit(cat_img, cat_rect)
+        # Obrazek kotka (bez napisu)
+        cat_img = self.cat_images[self.carried_cat]
+        cat_rect = cat_img.get_rect(center=(box_x + box_size // 2, box_y + box_size // 2))
+        screen.blit(cat_img, cat_rect)
 
     def _draw_collected_items(self, screen):
-        """Draw collected items in inventory (bottom section)"""
-        # Nagłówek sekcji znajdziek
-        header = self.small_font.render("ITEMS", True, (200, 180, 120))
-        header_x = self.inventory_rect.x + 80
-        header_y = self.inventory_rect.y + 200
-        screen.blit(header, (header_x, header_y))
-
+        """Draw collected items in inventory"""
         if not self.collected_items:
-            empty_text = self.small_font.render("None found", True, (100, 100, 100))
-            screen.blit(empty_text, (header_x, header_y + 25))
             return
 
         # Parametry slotów
         slot_size = 50
         slots_per_row = 5
         start_x = self.inventory_rect.x + 80
-        start_y = self.inventory_rect.y + 230
+        start_y = self.inventory_rect.y + 80
 
         for i, item_index in enumerate(self.collected_items):
             row = i // slots_per_row
@@ -169,13 +175,13 @@ class Inventory:
             item_rect = item_img.get_rect(center=slot_rect.center)
             screen.blit(item_img, item_rect)
 
-    def _draw_counters(self, screen):
+    def _draw_counters(self, screen, stored_cats=0):
         """Draw counters for cats and items in corner of screen"""
-        padding = 8
+        padding = 6
         y_offset = 10
 
-        # Cats counter
-        cat_text = f"Cats: {len(self.collected_cats)}/5"
+        # Cats counter (w chatce) - tylko liczba
+        cat_text = f"{stored_cats}/5"
         cat_surface = self.font.render(cat_text, True, (255, 220, 150))
 
         cat_bg_rect = pygame.Rect(10, y_offset, cat_surface.get_width() + padding * 2, cat_surface.get_height() + padding * 2)
@@ -185,8 +191,8 @@ class Inventory:
 
         y_offset += cat_bg_rect.height + 5
 
-        # Items counter
-        item_text = f"Items: {len(self.collected_items)}/10"
+        # Items counter - tylko liczba
+        item_text = f"{len(self.collected_items)}/10"
         item_surface = self.font.render(item_text, True, (150, 200, 255))
 
         item_bg_rect = pygame.Rect(10, y_offset, item_surface.get_width() + padding * 2, item_surface.get_height() + padding * 2)
@@ -197,7 +203,9 @@ class Inventory:
     def _draw_collect_hint(self, screen, item_type="cat"):
         """Draw hint for collecting cat or item"""
         if item_type == "cat":
-            hint_text = "[F] Collect cat"
+            hint_text = "[F] Pick up cat"
+        elif item_type == "storage":
+            hint_text = "[G] Put cat on bed"
         else:
             hint_text = "[F] Collect item"
 

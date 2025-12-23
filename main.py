@@ -1,5 +1,5 @@
 import pygame
-from src.world import map_initialization, Background, calculate_camera_offset
+from src.world import map_initialization, Background, calculate_camera_offset, Cabin
 from src.entities import Player, Npc, EnemyManager
 from src.ui import Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE
 
@@ -30,23 +30,30 @@ def init_game():
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
     lore_display = LoreDisplay(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-    # NPC spawns near player
-    npc_x = (spawn_point[0] + 3) * TILE_SIZE
-    npc_y = (spawn_point[1] + 2) * TILE_SIZE
-    npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=npc_x, y=npc_y)
+    # Create cabin at spawn point
+    cabin = Cabin(spawn_point[0], spawn_point[1], TILE_SIZE)
+
+    # Clear trees around cabin
+    cabin_bounds = cabin.get_bounds()
+    background.clear_trees_in_area(*cabin_bounds)
+
+    # NPC (Sprytek) spawns in front of cabin
+    sprytek_pos = cabin.get_sprytek_position()
+    npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=sprytek_pos[0], y=sprytek_pos[1])
 
     # Enemies spawn on paths
     enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=100)
 
-    return background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
+    return background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 
 
 # Initialize game
-background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
 
 # Collection state
 collect_cooldown = 0
 f_key_pressed = False
+g_key_pressed = False
 
 # Main game loop
 running = True
@@ -66,11 +73,12 @@ while running:
 
         # Still render background but don't update game logic
         camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
-        background.draw(screen, camera_offset, player)
+        background.draw(screen, camera_offset, player, cabin)
         npc.draw_sprytek(screen, camera_offset)
         enemy_manager.draw(screen, camera_offset)
         background.draw_leaves(screen, camera_offset)
-        inventory.update_inventory(keys, screen)
+        stored_cats = cabin.get_stored_cat_count()
+        inventory.update_inventory(keys, screen, stored_cats)
         npc.draw_chat_graphics(screen, player, camera_offset)
 
         # Draw lore display on top
@@ -81,38 +89,39 @@ while running:
         continue
 
     # Update game objects
-    player.update(keys, clock, npc, background)
+    player.update(keys, clock, npc, background, cabin)
     npc.update(keys, player)
     enemy_manager.update()
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):
-        background, player, inventory, lore_display, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
+        background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT = init_game()
         collect_cooldown = 0
         f_key_pressed = False
+        g_key_pressed = False
         continue
 
     # Collection cooldown
     if collect_cooldown > 0:
         collect_cooldown -= 1
 
-    # Check cat proximity and handle collection
+    # Check cat proximity and handle picking up (only if not carrying one)
     cat_index, cat_image_index = background.check_cat_proximity(player.player_rect)
-    if cat_index is not None:
+    if cat_index is not None and not inventory.is_carrying_cat():
         inventory.set_collect_hint(True)
         inventory.set_collectible_hint(False)
-        # Collect cat with F key (not during NPC dialogue, with cooldown)
+        # Pick up cat with F key (not during NPC dialogue, with cooldown)
         if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
             collected = background.collect_cat(cat_index)
             if collected:
-                inventory.add_cat(cat_image_index)
-                # Show lore for collected cat
+                inventory.pick_up_cat(cat_image_index)
+                # Show lore for picked up cat
                 lore_display.show_lore(CATS_LORE[cat_image_index], background.cat_images[cat_image_index])
                 collect_cooldown = 30
     else:
         inventory.set_collect_hint(False)
 
-        # Check collectible proximity
+        # Check collectible proximity (items go to inventory)
         coll_index, coll_item_index = background.check_collectible_proximity(player.player_rect)
         if coll_index is not None:
             inventory.set_collectible_hint(True)
@@ -129,15 +138,32 @@ while running:
 
     f_key_pressed = keys[pygame.K_f]
 
+    # Check if player is inside cabin and handle storing cat
+    player_inside_cabin = cabin.is_player_inside(player.player_rect)
+    if player_inside_cabin:
+        inventory.set_storage_hint(True)
+        # Store carried cat with G key
+        if keys[pygame.K_g] and not g_key_pressed and collect_cooldown == 0:
+            if inventory.is_carrying_cat():
+                cat_idx = inventory.put_down_cat()
+                if cat_idx is not None:
+                    cabin.store_cat(cat_idx)
+                collect_cooldown = 30
+    else:
+        inventory.set_storage_hint(False)
+
+    g_key_pressed = keys[pygame.K_g]
+
     # Calculate camera offset
     camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 
     # Render
-    background.draw(screen, camera_offset, player)
+    background.draw(screen, camera_offset, player, cabin)
     npc.draw_sprytek(screen, camera_offset)
     enemy_manager.draw(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)
-    inventory.update_inventory(keys, screen)
+    stored_cats = cabin.get_stored_cat_count()
+    inventory.update_inventory(keys, screen, stored_cats)
     npc.draw_chat_graphics(screen, player, camera_offset)
 
     # Update display

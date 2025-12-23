@@ -126,9 +126,9 @@ class Npc:
             # Position the chat graphic relative to Sprytek
             chat_position = self.sprytek_position - pygame.math.Vector2(camera_offset)
 
-            # Offset the chat graphic above Sprytek for better visibility
-            chat_position.y -= 170
-            chat_position.x -= 145  # Wycentruj dymek nad sprytkiem
+            # Offset the chat graphic to the right of Sprytek
+            chat_position.y -= 120
+            chat_position.x += 40  # Dymek na prawo od Sprytka
 
             # Draw the chat graphic at the calculated screen position
             screen.blit(self.chat_graphics, chat_position)

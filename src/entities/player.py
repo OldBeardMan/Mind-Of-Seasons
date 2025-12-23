@@ -42,7 +42,7 @@ class Player:
             self.map_position = [10, 10]
             self.player_rect = self.idle_image.get_rect(center=(screen_width // 2, screen_height // 2))
 
-    def update(self, keys, clock, npc, background=None):
+    def update(self, keys, clock, npc, background=None, cabin=None):
         """Update player position and animation."""
         self.is_walking = False
 
@@ -61,6 +61,8 @@ class Player:
         can_move = not new_pos.colliderect(npc.sprytek_rect)
         if can_move and background:
             can_move = not background.check_tree_collision(new_pos)
+        if can_move and cabin:
+            can_move = not cabin.check_collision(new_pos)
         if can_move:
             self.player_rect.x = new_pos.x
 
@@ -77,6 +79,8 @@ class Player:
         can_move = not new_pos.colliderect(npc.sprytek_rect)
         if can_move and background:
             can_move = not background.check_tree_collision(new_pos)
+        if can_move and cabin:
+            can_move = not cabin.check_collision(new_pos)
         if can_move:
             self.player_rect.y = new_pos.y
 

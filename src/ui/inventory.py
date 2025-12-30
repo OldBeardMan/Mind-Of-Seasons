@@ -10,16 +10,15 @@ def load_inventory_graphics(screen_width, screen_height):
 def load_cat_images():
     """Ładuje obrazki kotków do wyświetlania"""
     cat_images = []
-    cat_files = {0: 'Cat2.png', 1: 'Cat3.png', 2: 'Cat5.png'}
-    for i in range(5):
-        if i in cat_files:
+    for cat in CATS_LORE:
+        if "image" in cat:
             try:
-                cat_img = pygame.image.load(f'Grafiki/NPC/{cat_files[i]}').convert_alpha()
+                cat_img = pygame.image.load(f'Grafiki/NPC/{cat["image"]}').convert_alpha()
                 cat_img = pygame.transform.scale(cat_img, (50, 50))
             except:
-                cat_img = create_placeholder((50, 50), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
+                cat_img = create_placeholder((50, 50), cat["color"], cat["name"])
         else:
-            cat_img = create_placeholder((50, 50), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
+            cat_img = create_placeholder((50, 50), cat["color"], cat["name"])
         cat_images.append(cat_img)
     return cat_images
 
@@ -27,7 +26,14 @@ def load_collectible_images():
     """Ładuje obrazki znajdziek do wyświetlania w inventory"""
     coll_images = []
     for item in COLLECTIBLES_LORE:
-        coll_img = create_placeholder((40, 40), item["color"], item["name"])
+        if "image" in item:
+            try:
+                coll_img = pygame.image.load(f'Grafiki/Landscape/{item["image"]}').convert_alpha()
+                coll_img = pygame.transform.scale(coll_img, (40, 40))
+            except:
+                coll_img = create_placeholder((40, 40), item["color"], item["name"])
+        else:
+            coll_img = create_placeholder((40, 40), item["color"], item["name"])
         coll_images.append(coll_img)
     return coll_images
 

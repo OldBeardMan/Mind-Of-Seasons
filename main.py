@@ -15,7 +15,7 @@ pygame.display.set_caption("Mind of Seasons")
 def init_game():
     """Initialize or restart the game."""
     # Initialize map and get cat/spawn positions
-    MAP_WIDTH, MAP_HEIGHT = 1000, 1000
+    MAP_WIDTH, MAP_HEIGHT = 600, 600
     cat_positions, spawn_point = map_initialization(MAP_WIDTH, MAP_HEIGHT, num_cats=5)
 
     # Fallback values if map data is missing
@@ -91,7 +91,7 @@ while running:
     # Update game objects
     player.update(keys, clock, npc, background, cabin)
     npc.update(keys, player)
-    enemy_manager.update()
+    enemy_manager.update(clock.get_time())
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):

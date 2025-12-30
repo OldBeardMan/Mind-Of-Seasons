@@ -36,23 +36,29 @@ def load_graphics():
 
     # Cats - load existing images or create placeholders for 5 lore cats
     cat_images = []
-    cat_files = {0: 'Cat2.png', 1: 'Cat3.png', 2: 'Cat5.png'}  # Available graphics
-    for i in range(5):
-        if i in cat_files:
+    for cat in CATS_LORE:
+        if "image" in cat:
             try:
-                cat_img = pygame.image.load(f'Grafiki/NPC/{cat_files[i]}').convert_alpha()
+                cat_img = pygame.image.load(f'Grafiki/NPC/{cat["image"]}').convert_alpha()
                 cat_img = pygame.transform.scale(cat_img, (TREE_SIZE // 2, TREE_SIZE // 2))
             except:
-                cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
+                cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), cat["color"], cat["name"])
         else:
             # Create placeholder for cats without graphics
-            cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), CATS_LORE[i]["color"], CATS_LORE[i]["name"])
+            cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), cat["color"], cat["name"])
         cat_images.append(cat_img)
 
-    # Collectibles - all placeholders for now
+    # Collectibles - load image if available, otherwise placeholder
     collectible_images = []
     for item in COLLECTIBLES_LORE:
-        coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
+        if "image" in item:
+            try:
+                coll_img = pygame.image.load(f'Grafiki/Landscape/{item["image"]}').convert_alpha()
+                coll_img = pygame.transform.scale(coll_img, (COLLECTIBLE_SIZE, COLLECTIBLE_SIZE))
+            except:
+                coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
+        else:
+            coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
         collectible_images.append(coll_img)
 
     return tile_image, leaves_animation, tree_images, path_image, cat_images, collectible_images

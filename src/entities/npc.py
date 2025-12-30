@@ -8,49 +8,85 @@ def load_sprytek():
     image_sprytek=pygame.transform.scale(image_sprytek,(60,70))
     return image_sprytek
 
-def load_chat_graphics():
-    image_chat=pygame.image.load('Grafiki/UI/dialog.png').convert_alpha()
-    image_chat=pygame.transform.scale(image_chat, (350, 200))
-    return image_chat
-
 # Sprytek Dialogs
 SPRYTEK_DIALOGS = [
     {
         "id": "greeting",
         "texts": [
             "Hello! I am Sprytek!",
-            "I will help you collect cats.",
+            "I am so glad you found me!",
+            "I am your personal helper and emotional support!",
             "Press F to talk to me!"
         ]
     },
     {
         "id": "quest_intro",
         "texts": [
-            "I have a quest for you!",
-            "Many cats got lost in this area.",
-            "Could you find and collect them?",
-            "Just walk to a cat and press F!"
+            # Intro 1
+            "You are probably wondering why you are here.",
+            "Many are wondering but cannot find an answer.",
+            "But I hope we can find something else...",
+            "Or someone else.",
+            # Intro 2
+            "I came here with my master and 20 other kittens one day.",
+            "He said he wanted to rest a bit.",
+            "He built this cabin and kinda the forest around us.",
+            "He was building with his music.",
+            # Intro 3
+            "One day he was ready to return home.",
+            "But then these weird creatures started to spawn.",
+            "Right after he composed 'Do Not Listen'...",
+            "Things got messy.",
+            # Intro 4
+            "He really wanted to return, but these creatures got him.",
+            "He just disappeared one day... I am too afraid to go find him.",
+            "I really hope he left some clues for us,",
+            "so we can find him.",
+            # Intro 5
+            "Please go search for the kittens, they all ran away when he disappeared.",
+            "Maybe you will find some clues about him as well!",
+            "And remember to drink coffee as well! This place can be really demanding.",
+            "You can make a cup inside the cabin.",
+            # Intro 6
+            "Go search for the lost kittens while I wait here for you.",
+            "Bring them one by one to this safe cabin.",
+            "Be aware of the creatures lurking in the forest.",
+            "And don't forget your coffee!"
         ]
     },
     {
-        "id": "encouragement",
+        "id": "encouragement_1",
         "texts": [
             "You are doing great!",
             "Keep searching for cats!"
         ]
     },
     {
+        "id": "encouragement_2",
+        "texts": [
+            "Did you take your coffee?",
+            "It's really important!"
+        ]
+    },
+    {
+        "id": "encouragement_3",
+        "texts": [
+            "Be aware of the creatures.",
+            "You don't want to listen to them."
+        ]
+    },
+    {
         "id": "random_1",
         "texts": [
-            "You know, cats like to hide behind trees.",
-            "Look around carefully!"
+            "He was very afraid.",
+            "I wonder where he went."
         ]
     },
     {
         "id": "random_2",
         "texts": [
-            "Beautiful weather for a walk, right?",
-            "Perfect for finding cats!"
+            "Do you hear them? The creatures?",
+            "They are whispering something..."
         ]
     }
 ]
@@ -58,12 +94,17 @@ SPRYTEK_DIALOGS = [
 class Npc:
     def __init__(self, screen_width, screen_height, x, y):
         self.image_sprytek = load_sprytek()
-        self.chat_graphics = load_chat_graphics()
         self.sprytek_position = pygame.math.Vector2(x, y)
         self.sprytek_rect = self.image_sprytek.get_rect(center=(x, y))
-        self.chat_graphics_rect = self.chat_graphics.get_rect()
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+        # Rozmiary dymku dialogowego
+        self.bubble_width = 320
+        self.bubble_height = 140
+        self.bubble_padding = 15
+        self.bubble_color = (45, 40, 35)
+        self.bubble_border_color = (180, 160, 120)
 
         # System dialogu
         self.is_talking = False
@@ -76,6 +117,7 @@ class Npc:
         # Font do tekstu dialogu (pixelowy)
         pygame.font.init()
         self.dialog_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 10)
+        self.hint_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 8)
 
     # Rysuj sprytka mając na uwadze camere offset
     def draw_sprytek(self, screen, camera_offset):
@@ -123,31 +165,55 @@ class Npc:
         # Inflate proximity rect for checking player's proximity to Sprytek
         proximity_rect = self.sprytek_rect.inflate(50, 50)
         if proximity_rect.colliderect(player.player_rect):
-            # Position the chat graphic relative to Sprytek
-            chat_position = self.sprytek_position - pygame.math.Vector2(camera_offset)
+            # Pozycja Sprytka na ekranie
+            sprytek_screen = self.sprytek_position - pygame.math.Vector2(camera_offset)
 
-            # Offset the chat graphic to the right of Sprytek
-            chat_position.y -= 120
-            chat_position.x += 40  # Dymek na prawo od Sprytka
+            # Pozycja dymku - nad Sprytkiem, lekko na prawo
+            bubble_x = sprytek_screen.x + 30
+            bubble_y = sprytek_screen.y - self.bubble_height - 20
 
-            # Draw the chat graphic at the calculated screen position
-            screen.blit(self.chat_graphics, chat_position)
+            # Rysuj dymek
+            self._draw_speech_bubble(screen, bubble_x, bubble_y, sprytek_screen)
 
             # Wyświetl tekst dialogu lub podpowiedź
             if self.is_talking:
                 current_dialog = SPRYTEK_DIALOGS[self.current_dialog_index]
                 current_text = current_dialog["texts"][self.current_text_index]
-                self._draw_dialog_text(screen, current_text, chat_position)
+                self._draw_dialog_text(screen, current_text, bubble_x, bubble_y)
             else:
                 # Hint that player can press F
                 hint_text = "[F] Talk"
-                self._draw_dialog_text(screen, hint_text, chat_position)
+                self._draw_dialog_text(screen, hint_text, bubble_x, bubble_y)
 
-    def _draw_dialog_text(self, screen, text, chat_position):
+    def _draw_speech_bubble(self, screen, x, y, sprytek_pos):
+        """Rysuje prostokątny dymek dialogowy ze strzałką"""
+        # Główny prostokąt dymku
+        bubble_rect = pygame.Rect(x, y, self.bubble_width, self.bubble_height)
+
+        # Rysuj tło dymku z zaokrąglonymi rogami
+        pygame.draw.rect(screen, self.bubble_color, bubble_rect, border_radius=10)
+
+        # Rysuj obramowanie
+        pygame.draw.rect(screen, self.bubble_border_color, bubble_rect, 3, border_radius=10)
+
+        # Strzałka wskazująca na Sprytka (trójkąt)
+        arrow_size = 15
+        arrow_points = [
+            (x + 10, y + self.bubble_height),  # Lewy górny punkt strzałki
+            (x + 10 + arrow_size, y + self.bubble_height),  # Prawy górny punkt
+            (x - 5, y + self.bubble_height + arrow_size + 5)  # Dolny punkt (wskazuje na Sprytka)
+        ]
+        pygame.draw.polygon(screen, self.bubble_color, arrow_points)
+        # Obramowanie strzałki (tylko zewnętrzne krawędzie)
+        pygame.draw.line(screen, self.bubble_border_color, arrow_points[0], arrow_points[2], 3)
+        pygame.draw.line(screen, self.bubble_border_color, arrow_points[1], arrow_points[2], 3)
+
+    def _draw_dialog_text(self, screen, text, bubble_x, bubble_y):
         # Pozycja tekstu wewnątrz dymku
-        text_x = chat_position.x + 90
-        text_y = chat_position.y + 60
-        max_width = 220
+        text_x = bubble_x + self.bubble_padding
+        text_y = bubble_y + self.bubble_padding
+        max_width = self.bubble_width - (self.bubble_padding * 2)
+        line_height = 16
 
         # Łamanie tekstu na linie
         words = text.split(' ')
@@ -166,17 +232,20 @@ class Npc:
         if current_line:
             lines.append(current_line.strip())
 
-        # Rysowanie linii tekstu
+        # Rysowanie linii tekstu (jasny kolor na ciemnym tle)
+        text_color = (230, 220, 200)
         for i, line in enumerate(lines):
-            text_surface = self.dialog_font.render(line, True, (50, 50, 50))
-            screen.blit(text_surface, (text_x, text_y + i * 16))
+            text_surface = self.dialog_font.render(line, True, text_color)
+            screen.blit(text_surface, (text_x, text_y + i * line_height))
 
-        # Continue hint (if there is more text)
+        # Continue hint (if there is more text) - na dole dymku
         if self.is_talking:
             current_dialog = SPRYTEK_DIALOGS[self.current_dialog_index]
             if self.current_text_index < len(current_dialog["texts"]) - 1:
                 continue_text = "[F] Next..."
             else:
                 continue_text = "[F] End"
-            continue_surface = self.dialog_font.render(continue_text, True, (100, 100, 100))
-            screen.blit(continue_surface, (text_x, text_y + len(lines) * 16 + 10))
+            continue_surface = self.hint_font.render(continue_text, True, (150, 140, 120))
+            # Stała pozycja na dole dymku
+            hint_y = bubble_y + self.bubble_height - self.bubble_padding - 10
+            screen.blit(continue_surface, (text_x, hint_y))

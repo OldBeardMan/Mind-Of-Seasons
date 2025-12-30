@@ -123,6 +123,15 @@ class Cabin:
         self.bed_pos = (1, 1)      # Top-left inside (2 tiles wide)
         self.coffee_pos = (8, 1)   # Top-right inside
 
+        # Pozycje legowisk dla kotków (5 legowisk pod górną ścianą)
+        self.cat_bed_positions = [
+            (3, 2),   # Pod ścianą - lewo
+            (4, 2),   # Pod ścianą - środek-lewo
+            (5, 2),   # Pod ścianą - środek
+            (6, 2),   # Pod ścianą - środek-prawo
+            (7, 2),   # Pod ścianą - prawo
+        ]
+
         # Build collision rects for walls AND furniture
         self.wall_rects = self._build_wall_collisions()
         self.furniture_rects = self._build_furniture_collisions()
@@ -133,15 +142,6 @@ class Cabin:
 
         # Storage system - tylko kotki (na legowiskach)
         self.stored_cats = []  # Lista indeksów przechowywanych kotków
-
-        # Pozycje legowisk dla kotków (5 legowisk pod górną ścianą)
-        self.cat_bed_positions = [
-            (3, 2),   # Pod ścianą - lewo
-            (4, 2),   # Pod ścianą - środek-lewo
-            (5, 2),   # Pod ścianą - środek
-            (6, 2),   # Pod ścianą - środek-prawo
-            (7, 2),   # Pod ścianą - prawo
-        ]
 
     def _build_wall_collisions(self):
         """Build collision rectangles for walls."""

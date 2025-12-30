@@ -4,157 +4,163 @@
 CATS_LORE = [
     {
         "id": "cat_1",
-        "name": "Whiskers",
+        "name": "Water",
         "lore": [
-            "You found Whiskers, the eldest of the lost cats.",
-            "He was once the guardian of the Ancient Grove.",
-            "His wisdom guided many travelers through the forest."
+            "You found Water, the eldest of the lost cats.",
+            "He was once searching for a cure for depression.",
+            "He didn't find one.",
+            "His wisdom guided many use.. travelers through the forest... and showers."
         ],
-        "color": (255, 150, 50)  # Orange
+        "color": (255, 150, 50),  # Orange
+        "image": "Cat2.png"
     },
     {
         "id": "cat_2",
-        "name": "Shadow",
+        "name": "Peanut",
         "lore": [
-            "Shadow emerges from the darkness.",
-            "This mysterious cat has been watching you since you arrived.",
-            "They say Shadow can see things others cannot..."
+            "Peanut emerges from the darkness.",
+            "This mysterious cat has been liking peanut butter for a long time.",
+            "Some say he is hungry all the time. Others say he never wants to eat.",
+            "His master just forgot about him.",
+            "Or maybe he is just a glitch?"
         ],
-        "color": (80, 80, 100)  # Dark gray-blue
+        "color": (80, 80, 100),  # Dark gray-blue
+        "image": "Cat3.png"
     },
     {
         "id": "cat_3",
-        "name": "Luna",
+        "name": "Bit",
         "lore": [
-            "Luna, the moonlit wanderer.",
-            "She appears only when the stars align.",
-            "Her silver fur glows with an otherworldly light.",
-            "Legend says she knows the path to the Season's Heart."
+            "Bit wasn't welcomed at once.",
+            "Someone said he is too chaotic.",
+            "He just needed some work to flourish.",
+            "He remembers when he listened...",
+            "He remembers it all."
         ],
-        "color": (200, 200, 230)  # Silver
+        "color": (200, 200, 230),  # Silver
+        "image": "Cat5.png"
     },
     {
         "id": "cat_4",
-        "name": "Ember",
+        "name": "Block",
         "lore": [
-            "Ember, born from the last warmth of autumn.",
-            "His fiery spirit keeps the forest alive during cold nights.",
-            "Without him, winter would consume everything."
+            "Block, born from the last warmth of the city.",
+            "He doesn't belong in the wild, but he desires it.",
+            "But is he really in the wild? Is it real?"
         ],
         "color": (230, 100, 50)  # Fire orange-red
+        # brak obrazka - użyje placeholdera
     },
     {
         "id": "cat_5",
-        "name": "Frost",
+        "name": "scanner",
         "lore": [
-            "The final cat... Frost.",
-            "She holds the key to understanding the Mind of Seasons.",
-            "With all five cats reunited, the ancient balance can be restored.",
-            "The forest remembers. The seasons will turn once more."
+            "What? scanner?",
+            "I have never heard of scanner.",
+            "'[REDACTED] real.' He said..."
         ],
         "color": (150, 220, 255)  # Ice blue
+        # brak obrazka - użyje placeholdera
     }
 ]
 
 COLLECTIBLES_LORE = [
     {
         "id": "item_1",
-        "name": "Ancient Key",
+        "name": "Piano",
         "lore": [
-            "A key from a forgotten era.",
-            "Its surface is covered with mysterious symbols.",
-            "What door does it open?"
+            "An old piano, weathered by time.",
+            "Its keys still play a melody you don't want to listen to.",
+            "Music echoes through the seasons..."
         ],
-        "color": (180, 150, 80)  # Bronze
+        "color": (40, 40, 40),  # Black
+        "image": "piano.png"
     },
     {
         "id": "item_2",
-        "name": "Broken Compass",
+        "name": "Printer",
         "lore": [
-            "This compass no longer points north.",
-            "Instead, it seems to point... somewhere else.",
-            "Perhaps to something important."
+            "From his desk... I can't believe it's the same one...",
+            "This thing has started it all!",
+            "But it worked before... Why doesn't it work here?"
         ],
         "color": (150, 100, 70)  # Brown
     },
     {
         "id": "item_3",
-        "name": "Crystal Shard",
+        "name": "In The Autumn Forest CD",
         "lore": [
-            "A fragment of pure crystallized magic.",
-            "It hums with dormant energy.",
-            "Once part of something much larger."
+            "The things you find are getting very weird.",
+            "How can we find the album which we are inside?",
+            "Maybe we should forget about this."
         ],
         "color": (200, 100, 255)  # Purple crystal
     },
     {
         "id": "item_4",
-        "name": "Old Photograph",
+        "name": "Acoustic Bass",
         "lore": [
-            "A faded photograph showing the forest long ago.",
-            "You can barely make out figures standing together.",
-            "On the back: 'Before the seasons stopped.'"
+            "Oh! It's his!",
+            "After all, maybe you should give it back to him?",
+            "Why did he leave this behind?"
         ],
         "color": (180, 170, 150)  # Sepia
     },
     {
         "id": "item_5",
-        "name": "Feather of Change",
+        "name": "Lukasz Krupa Plushie",
         "lore": [
-            "A feather that shifts colors as you watch.",
-            "It belonged to a bird that could travel between seasons.",
-            "Such creatures are rare now."
+            "lmao"
         ],
         "color": (100, 200, 150)  # Teal-green
     },
     {
         "id": "item_6",
-        "name": "Sealed Letter",
+        "name": "Wool",
         "lore": [
-            "A letter sealed with an unknown crest.",
-            "The seal is too fragile to break.",
-            "Who was it meant for?"
+            "The ancient thing... uh.. person?",
+            "It is the core.",
+            "But it doesn't even know it."
         ],
         "color": (230, 220, 200)  # Parchment
     },
     {
         "id": "item_7",
-        "name": "Music Box",
+        "name": "MC Music Disc",
         "lore": [
-            "A small music box with a broken mechanism.",
-            "When you shake it, you hear a faint melody.",
-            "The tune feels familiar somehow..."
+            "Oh! The letter and numbers guy!",
+            "He inspired the one we are looking for!",
+            "Pure classic."
         ],
         "color": (200, 180, 220)  # Lavender
     },
     {
         "id": "item_8",
-        "name": "Stone Tablet",
+        "name": "Return Sign",
         "lore": [
-            "Part of an ancient stone tablet.",
-            "The inscription reads: 'When five become one...'",
-            "The rest is broken off."
+            "Yeah, ok, a return sign, I see, but...",
+            "It doesn't point anywhere...",
+            "So I guess we are sure he didn't return..."
         ],
         "color": (130, 130, 130)  # Gray stone
     },
     {
         "id": "item_9",
-        "name": "Glowing Acorn",
+        "name": "Saturn",
         "lore": [
-            "An acorn that radiates gentle warmth.",
-            "It comes from the World Tree.",
-            "Plant it, and a new season might bloom."
+            "OMG SATURN, or satrun depends...",
+            "I think you know what it is."
         ],
         "color": (180, 120, 60)  # Acorn brown
     },
     {
         "id": "item_10",
-        "name": "Mirror Fragment",
+        "name": "Compass Pointing West",
         "lore": [
-            "A shard from the Mirror of Seasons.",
-            "Your reflection shows a different time.",
-            "Collect all pieces to see the whole truth.",
-            "This is the final piece of the puzzle."
+            "Is it broken? It points only west.",
+            "I can see he was searching the way out really hard.",
+            "But how can you find it with (heart made of stone)",
+            "broken tools?"
         ],
         "color": (220, 240, 255)  # Mirror silver-blue
     }

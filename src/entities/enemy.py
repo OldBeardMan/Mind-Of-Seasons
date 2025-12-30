@@ -1,5 +1,6 @@
 import pygame
 import random
+from src.utils import resource_path
 
 ENEMY_SIZE = (80, 80)
 
@@ -8,17 +9,18 @@ def load_graphics():
     """Load enemy graphics with animation frames."""
     frames = []
     for i in range(1, 5):
-        img = pygame.image.load(f'Grafiki/NPC/Enemy/enemy{i}.png').convert_alpha()
+        img = pygame.image.load(resource_path(f'Grafiki/NPC/Enemy/enemy{i}.png')).convert_alpha()
         img = pygame.transform.scale(img, ENEMY_SIZE)
         frames.append(img)
     return frames
 
 
 class Enemy:
-    def __init__(self, x, y, tile_size, map_data):
+    def __init__(self, x, y, tile_size, map_data, tree_positions=None):
         self.animation_frames = load_graphics()
         self.tile_size = tile_size
         self.map_data = map_data
+        self.tree_tiles = set((tx, ty) for tx, ty, _ in (tree_positions or []))
 
         # Animation state
         self.current_frame = 0
@@ -31,15 +33,25 @@ class Enemy:
         self.rect = pygame.Rect(self.x, self.y, ENEMY_SIZE[0], ENEMY_SIZE[1])
 
         # Movement
-        self.speed = 2
+        self.speed = 1.5
+        self.chase_speed = 2.5  # Szybkość podczas gonienia (wolniejsza niż gracz)
         self.direction = random.choice(['up', 'down', 'left', 'right'])
         self.change_direction_timer = 0
         self.change_direction_interval = random.randint(60, 180)  # frames
 
-    def _is_path(self, tile_x, tile_y):
-        """Check if a tile is a path."""
+        # Chase behavior
+        self.is_chasing = False
+        self.chase_distance = 200  # pixels - dystans wykrycia gracza
+        self.lose_distance = 350  # pixels - dystans utraty gracza
+
+    def _is_walkable(self, tile_x, tile_y):
+        """Check if a tile is walkable (path or grass, but not tree)."""
         if 0 <= tile_y < len(self.map_data) and 0 <= tile_x < len(self.map_data[0]):
-            return self.map_data[tile_y][tile_x] == 'path'
+            # Nie może wchodzić w drzewa
+            if (tile_x, tile_y) in self.tree_tiles:
+                return False
+            # Może chodzić po trawie i ścieżce
+            return True
         return False
 
     def _get_current_tile(self):
@@ -47,19 +59,19 @@ class Enemy:
         return self.rect.centerx // self.tile_size, self.rect.centery // self.tile_size
 
     def _can_move_to(self, new_rect):
-        """Check if enemy can move to new position (stays on path)."""
+        """Check if enemy can move to new position."""
         # Check all corners of the rect
         corners = [
-            (new_rect.left, new_rect.top),
-            (new_rect.right - 1, new_rect.top),
-            (new_rect.left, new_rect.bottom - 1),
-            (new_rect.right - 1, new_rect.bottom - 1),
+            (new_rect.left + 10, new_rect.top + 10),
+            (new_rect.right - 10, new_rect.top + 10),
+            (new_rect.left + 10, new_rect.bottom - 10),
+            (new_rect.right - 10, new_rect.bottom - 10),
         ]
 
         for px, py in corners:
             tile_x = px // self.tile_size
             tile_y = py // self.tile_size
-            if not self._is_path(tile_x, tile_y):
+            if not self._is_walkable(tile_x, tile_y):
                 return False
         return True
 
@@ -84,7 +96,34 @@ class Enemy:
 
         return self.direction  # Keep current if no valid direction
 
-    def update(self, dt=16):
+    def _get_distance_to(self, target_rect):
+        """Calculate distance to target."""
+        dx = target_rect.centerx - self.rect.centerx
+        dy = target_rect.centery - self.rect.centery
+        return (dx * dx + dy * dy) ** 0.5
+
+    def _get_movement_towards(self, target_rect, speed):
+        """Get x,y movement towards target (diagonal movement supported)."""
+        dx = target_rect.centerx - self.rect.centerx
+        dy = target_rect.centery - self.rect.centery
+
+        # Normalizacja wektora ruchu
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance > 0:
+            move_x = (dx / distance) * speed
+            move_y = (dy / distance) * speed
+        else:
+            move_x, move_y = 0, 0
+
+        # Ustaw kierunek dla animacji
+        if abs(dx) > abs(dy):
+            self.direction = 'right' if dx > 0 else 'left'
+        else:
+            self.direction = 'down' if dy > 0 else 'up'
+
+        return move_x, move_y
+
+    def update(self, dt=16, player_rect=None):
         """Update enemy position, AI and animation."""
         self.change_direction_timer += 1
 
@@ -94,28 +133,67 @@ class Enemy:
             self.animation_timer = 0
             self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
 
-        # Change direction at random intervals
-        if self.change_direction_timer >= self.change_direction_interval:
-            self.change_direction_timer = 0
-            self.change_direction_interval = random.randint(30, 120)
-            self.direction = random.choice(['up', 'down', 'left', 'right'])
+        # Check if should chase player
+        if player_rect:
+            distance = self._get_distance_to(player_rect)
 
-        # Try to move in current direction
-        new_rect = self.rect.copy()
-        if self.direction == 'up':
-            new_rect.y -= self.speed
-        elif self.direction == 'down':
-            new_rect.y += self.speed
-        elif self.direction == 'left':
-            new_rect.x -= self.speed
-        elif self.direction == 'right':
-            new_rect.x += self.speed
+            if distance < self.chase_distance:
+                self.is_chasing = True
+            elif distance > self.lose_distance:
+                self.is_chasing = False
 
-        # Move if possible (stay on path)
-        if self._can_move_to(new_rect):
-            self.rect = new_rect
-            self.x = self.rect.x
-            self.y = self.rect.y
+        if self.is_chasing and player_rect:
+            # Ruch po przekątnej w kierunku gracza
+            move_x, move_y = self._get_movement_towards(player_rect, self.chase_speed)
+
+            new_rect = self.rect.copy()
+            new_rect.x += move_x
+            new_rect.y += move_y
+
+            # Spróbuj ruchu pełnego
+            if self._can_move_to(new_rect):
+                self.rect = new_rect
+                self.x = self.rect.x
+                self.y = self.rect.y
+            else:
+                # Spróbuj ruchu tylko w X
+                new_rect_x = self.rect.copy()
+                new_rect_x.x += move_x
+                if self._can_move_to(new_rect_x):
+                    self.rect = new_rect_x
+                    self.x = self.rect.x
+                    self.y = self.rect.y
+                else:
+                    # Spróbuj ruchu tylko w Y
+                    new_rect_y = self.rect.copy()
+                    new_rect_y.y += move_y
+                    if self._can_move_to(new_rect_y):
+                        self.rect = new_rect_y
+                        self.x = self.rect.x
+                        self.y = self.rect.y
+        else:
+            # Random direction change when not chasing
+            if self.change_direction_timer >= self.change_direction_interval:
+                self.change_direction_timer = 0
+                self.change_direction_interval = random.randint(30, 120)
+                self.direction = self._choose_new_direction()
+
+            # Try to move in current direction
+            new_rect = self.rect.copy()
+            if self.direction == 'up':
+                new_rect.y -= self.speed
+            elif self.direction == 'down':
+                new_rect.y += self.speed
+            elif self.direction == 'left':
+                new_rect.x -= self.speed
+            elif self.direction == 'right':
+                new_rect.x += self.speed
+
+            # Move if possible
+            if self._can_move_to(new_rect):
+                self.rect = new_rect
+                self.x = self.rect.x
+                self.y = self.rect.y
 
     def check_collision(self, player_rect):
         """Check collision with player."""
@@ -139,37 +217,50 @@ class Enemy:
 class EnemyManager:
     """Manages all enemies in the game."""
 
-    def __init__(self, tile_size, map_data, spawn_point, num_enemies=10):
+    def __init__(self, tile_size, map_data, spawn_point, tree_positions=None, num_enemies=10):
         self.tile_size = tile_size
         self.map_data = map_data
+        self.tree_positions = tree_positions or []
+        self.tree_tiles = set((tx, ty) for tx, ty, _ in self.tree_positions)
         self.enemies = []
 
-        # Find path positions for spawning (excluding area near spawn)
+        # Find valid positions for spawning (excluding trees and area near spawn)
         spawn_positions = self._find_spawn_positions(spawn_point, num_enemies)
 
         for pos in spawn_positions:
-            enemy = Enemy(pos[0], pos[1], tile_size, map_data)
+            enemy = Enemy(pos[0], pos[1], tile_size, map_data, tree_positions)
             self.enemies.append(enemy)
 
+    def _is_near_tree(self, x, y, radius=2):
+        """Check if position is near any tree (trees are larger than 1 tile)."""
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                if (x + dx, y + dy) in self.tree_tiles:
+                    return True
+        return False
+
     def _find_spawn_positions(self, spawn_point, num_enemies):
-        """Find valid spawn positions on paths, away from player spawn."""
-        path_positions = []
+        """Find valid spawn positions on paths/grass, away from player spawn and trees."""
+        valid_positions = []
         min_distance_from_spawn = 15  # tiles
 
         for y in range(len(self.map_data)):
             for x in range(len(self.map_data[y])):
-                if self.map_data[y][x] == 'path':
-                    # Check distance from spawn
-                    dist = ((x - spawn_point[0]) ** 2 + (y - spawn_point[1]) ** 2) ** 0.5
-                    if dist > min_distance_from_spawn:
-                        path_positions.append((x, y))
+                # Nie spawnuj w pobliżu drzew (drzewa są większe niż 1 tile)
+                if self._is_near_tree(x, y, radius=2):
+                    continue
+
+                # Check distance from spawn
+                dist = ((x - spawn_point[0]) ** 2 + (y - spawn_point[1]) ** 2) ** 0.5
+                if dist > min_distance_from_spawn:
+                    valid_positions.append((x, y))
 
         # Select random positions, ensuring some spacing
         selected = []
         min_enemy_spacing = 8  # tiles between enemies
 
-        random.shuffle(path_positions)
-        for pos in path_positions:
+        random.shuffle(valid_positions)
+        for pos in valid_positions:
             if len(selected) >= num_enemies:
                 break
 
@@ -186,10 +277,10 @@ class EnemyManager:
 
         return selected
 
-    def update(self, dt=16):
+    def update(self, dt=16, player_rect=None):
         """Update all enemies."""
         for enemy in self.enemies:
-            enemy.update(dt)
+            enemy.update(dt, player_rect)
 
     def check_player_collision(self, player_rect):
         """Check if player collides with any enemy."""

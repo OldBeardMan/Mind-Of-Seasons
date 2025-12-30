@@ -1,13 +1,14 @@
 import pygame
+from src.utils import resource_path
 
 PLAYER_SIZE = (70, 70)
 
 
 def load_graphics():
     """Load and scale player graphics."""
-    idle = pygame.image.load('Grafiki/Character/character_idle.png').convert_alpha()
-    walk1 = pygame.image.load('Grafiki/Character/character_walk1.png').convert_alpha()
-    walk2 = pygame.image.load('Grafiki/Character/character_walk2.png').convert_alpha()
+    idle = pygame.image.load(resource_path('Grafiki/Character/character_idle.png')).convert_alpha()
+    walk1 = pygame.image.load(resource_path('Grafiki/Character/character_walk1.png')).convert_alpha()
+    walk2 = pygame.image.load(resource_path('Grafiki/Character/character_walk2.png')).convert_alpha()
 
     idle = pygame.transform.scale(idle, PLAYER_SIZE)
     walk1 = pygame.transform.scale(walk1, PLAYER_SIZE)

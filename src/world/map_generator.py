@@ -2,6 +2,7 @@ import random
 import os
 import math
 from noise import pnoise2
+from src.utils import resource_path
 
 
 def generate_map(width, height, scale=15.0, octaves=4, num_cats=5):
@@ -139,14 +140,14 @@ def _draw_path(grid, start, end, width, height):
 
 def _save_grid(grid, filename):
     """Save map grid to file."""
-    with open(filename, "w") as f:
+    with open(resource_path(filename), "w") as f:
         for row in grid:
             f.write(''.join(str(cell) for cell in row) + "\n")
 
 
 def _save_map_data(cat_positions, spawn_point, filename):
     """Save cat positions and spawn point to file."""
-    with open(filename, "w") as f:
+    with open(resource_path(filename), "w") as f:
         f.write(f"spawn:{spawn_point[0]},{spawn_point[1]}\n")
         for x, y in cat_positions:
             f.write(f"cat:{x},{y}\n")
@@ -157,7 +158,7 @@ def _load_map_data(filename):
     cat_positions = []
     spawn_point = None
     try:
-        with open(filename, "r") as f:
+        with open(resource_path(filename), "r") as f:
             for line in f:
                 line = line.strip()
                 if line.startswith("spawn:"):

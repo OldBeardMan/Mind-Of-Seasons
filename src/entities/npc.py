@@ -1,10 +1,11 @@
 
 # TODO Kolizja ze sprytkiem nie jest precyzyjna, kiedyś mozna to poprawić
 import pygame
+from src.utils import resource_path
 
 #ładowanie grafiki sprytka
 def load_sprytek():
-    image_sprytek=pygame.image.load('Grafiki/NPC/Sprytek.png')
+    image_sprytek=pygame.image.load(resource_path('Grafiki/NPC/Sprytek.png'))
     image_sprytek=pygame.transform.scale(image_sprytek,(60,70))
     return image_sprytek
 
@@ -116,8 +117,8 @@ class Npc:
 
         # Font do tekstu dialogu (pixelowy)
         pygame.font.init()
-        self.dialog_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 10)
-        self.hint_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 8)
+        self.dialog_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 10)
+        self.hint_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
 
     # Rysuj sprytka mając na uwadze camere offset
     def draw_sprytek(self, screen, camera_offset):

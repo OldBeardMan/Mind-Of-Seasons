@@ -2,6 +2,7 @@ import pygame
 import random
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
+from src.utils import resource_path
 
 # Constants
 TILE_SIZE = 64
@@ -13,25 +14,25 @@ COLLECTIBLE_SIZE = 48
 def load_graphics():
     """Load and scale all background graphics."""
     # Base tile
-    tile_image = pygame.image.load('Grafiki/Landscape/kafelek.png').convert_alpha()
+    tile_image = pygame.image.load(resource_path('Grafiki/Landscape/kafelek.png')).convert_alpha()
     tile_image = pygame.transform.scale(tile_image, (TILE_SIZE, TILE_SIZE))
 
     # Animated leaves
     leaves_animation = []
     for i in range(5):
-        leaves_img = pygame.image.load(f'Grafiki/Landscape/Leaves/{i}.png').convert_alpha()
+        leaves_img = pygame.image.load(resource_path(f'Grafiki/Landscape/Leaves/{i}.png')).convert_alpha()
         leaves_img = pygame.transform.scale(leaves_img, (128, 128))
         leaves_animation.append(leaves_img)
 
     # Trees
     tree_images = []
     for i in range(1, 3):
-        tree_img = pygame.image.load(f'Grafiki/Landscape/Tree{i}.png').convert_alpha()
+        tree_img = pygame.image.load(resource_path(f'Grafiki/Landscape/Tree{i}.png')).convert_alpha()
         tree_img = pygame.transform.scale(tree_img, (TREE_SIZE, TREE_SIZE))
         tree_images.append(tree_img)
 
     # Path
-    path_image = pygame.image.load('Grafiki/Landscape/path.png').convert_alpha()
+    path_image = pygame.image.load(resource_path('Grafiki/Landscape/path.png')).convert_alpha()
     path_image = pygame.transform.scale(path_image, (TILE_SIZE, TILE_SIZE))
 
     # Cats - load existing images or create placeholders for 5 lore cats
@@ -39,7 +40,7 @@ def load_graphics():
     for cat in CATS_LORE:
         if "image" in cat:
             try:
-                cat_img = pygame.image.load(f'Grafiki/NPC/{cat["image"]}').convert_alpha()
+                cat_img = pygame.image.load(resource_path(f'Grafiki/NPC/{cat["image"]}')).convert_alpha()
                 cat_img = pygame.transform.scale(cat_img, (TREE_SIZE // 2, TREE_SIZE // 2))
             except:
                 cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), cat["color"], cat["name"])
@@ -53,7 +54,7 @@ def load_graphics():
     for item in COLLECTIBLES_LORE:
         if "image" in item:
             try:
-                coll_img = pygame.image.load(f'Grafiki/Landscape/{item["image"]}').convert_alpha()
+                coll_img = pygame.image.load(resource_path(f'Grafiki/Landscape/{item["image"]}')).convert_alpha()
                 coll_img = pygame.transform.scale(coll_img, (COLLECTIBLE_SIZE, COLLECTIBLE_SIZE))
             except:
                 coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
@@ -65,13 +66,14 @@ def load_graphics():
 
 
 class Background:
-    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None, collectible_positions=None):
+    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None, collectible_positions=None, spawn_point=None):
         self.tile_image, self.leaves_animation, self.tree_images, self.path_image, self.cat_images, self.collectible_images = load_graphics()
         self.map_width = map_width
         self.map_height = map_height
         self.tile_size = tile_size
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.spawn_point = spawn_point or (map_width // 2, map_height // 2)
 
         # Leaves animation
         self.leaves_size = 128
@@ -93,7 +95,7 @@ class Background:
     def _load_map(self, filename):
         """Load map from file."""
         map_data = []
-        with open(filename, 'r') as f:
+        with open(resource_path(filename), 'r') as f:
             for line in f:
                 row = ['path' if c == '1' else 'grass' for c in line.strip()]
                 map_data.append(row)
@@ -221,13 +223,17 @@ class Background:
         collectibles = []
         tree_tiles = set((x, y) for x, y, _ in self.tree_positions)
         cat_tiles = set((x, y) for x, y, _ in self.cat_positions)
+        min_distance_from_spawn = 20  # tiles
 
-        # Find all path positions not occupied
+        # Find all path positions not occupied and far from spawn
         path_positions = []
         for y in range(len(self.map_data)):
             for x in range(len(self.map_data[y])):
                 if self.map_data[y][x] == 'path' and (x, y) not in tree_tiles and (x, y) not in cat_tiles:
-                    path_positions.append((x, y))
+                    # Check distance from spawn
+                    dist_from_spawn = ((x - self.spawn_point[0]) ** 2 + (y - self.spawn_point[1]) ** 2) ** 0.5
+                    if dist_from_spawn > min_distance_from_spawn:
+                        path_positions.append((x, y))
 
         # Select spread out positions for 10 collectibles
         selected = []

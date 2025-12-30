@@ -120,7 +120,7 @@ COLLECTIBLES_LORE = [
         "lore": [
             "The ancient thing... uh.. person?",
             "It is the core.",
-            "But it doesn't even know it."
+            "It is..."
         ],
         "color": (230, 220, 200)  # Parchment
     },

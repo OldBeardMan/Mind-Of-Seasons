@@ -25,7 +25,7 @@ def init_game():
         cat_positions = []
 
     # Create game objects
-    background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, cat_positions)
+    background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, cat_positions, spawn_point=spawn_point)
     player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, spawn_position=spawn_point)
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
     lore_display = LoreDisplay(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -41,8 +41,8 @@ def init_game():
     sprytek_pos = cabin.get_sprytek_position()
     npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=sprytek_pos[0], y=sprytek_pos[1])
 
-    # Enemies spawn on paths
-    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, num_enemies=100)
+    # Enemies spawn (not in trees)
+    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, background.tree_positions, num_enemies=100)
 
     return background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 
@@ -91,7 +91,7 @@ while running:
     # Update game objects
     player.update(keys, clock, npc, background, cabin)
     npc.update(keys, player)
-    enemy_manager.update(clock.get_time())
+    enemy_manager.update(clock.get_time(), player.player_rect)
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):

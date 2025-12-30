@@ -1,11 +1,8 @@
 import pygame
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
+from src.utils import resource_path
 
-def load_inventory_graphics(screen_width, screen_height):
-    image_inventory = pygame.image.load('Grafiki/UI/Slot.png').convert_alpha()
-    image_inventory = pygame.transform.scale(image_inventory, (screen_width // 1.9, screen_height // 1.2))
-    return image_inventory
 
 def load_cat_images():
     """Ładuje obrazki kotków do wyświetlania"""
@@ -13,7 +10,7 @@ def load_cat_images():
     for cat in CATS_LORE:
         if "image" in cat:
             try:
-                cat_img = pygame.image.load(f'Grafiki/NPC/{cat["image"]}').convert_alpha()
+                cat_img = pygame.image.load(resource_path(f'Grafiki/NPC/{cat["image"]}')).convert_alpha()
                 cat_img = pygame.transform.scale(cat_img, (50, 50))
             except:
                 cat_img = create_placeholder((50, 50), cat["color"], cat["name"])
@@ -22,13 +19,14 @@ def load_cat_images():
         cat_images.append(cat_img)
     return cat_images
 
+
 def load_collectible_images():
     """Ładuje obrazki znajdziek do wyświetlania w inventory"""
     coll_images = []
     for item in COLLECTIBLES_LORE:
         if "image" in item:
             try:
-                coll_img = pygame.image.load(f'Grafiki/Landscape/{item["image"]}').convert_alpha()
+                coll_img = pygame.image.load(resource_path(f'Grafiki/Landscape/{item["image"]}')).convert_alpha()
                 coll_img = pygame.transform.scale(coll_img, (40, 40))
             except:
                 coll_img = create_placeholder((40, 40), item["color"], item["name"])
@@ -37,15 +35,21 @@ def load_collectible_images():
         coll_images.append(coll_img)
     return coll_images
 
+
 class Inventory:
     def __init__(self, screen_width, screen_height):
-        # Ładowanie grafiki ekwipunku
-        self.inventory_image = load_inventory_graphics(screen_width, screen_height)
-        self.inventory_rect = self.inventory_image.get_rect(center=(screen_width // 2, screen_height // 2))
         self.inventory_open = False
         self.toggle_pressed = False
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+        # Rozmiary panelu inventory
+        self.panel_width = 400
+        self.panel_height = 350
+        self.panel_x = (screen_width - self.panel_width) // 2
+        self.panel_y = (screen_height - self.panel_height) // 2
+        self.panel_color = (45, 40, 35)
+        self.panel_border_color = (180, 160, 120)
 
         # Obrazki kotków (do wyświetlania noszonego kotka)
         self.cat_images = load_cat_images()
@@ -59,16 +63,22 @@ class Inventory:
 
         # Font do wyświetlania licznika (pixelowy)
         pygame.font.init()
-        self.font = pygame.font.Font('Czcionki/PressStart2P.ttf', 12)
-        self.small_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 8)
+        self.font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 12)
+        self.small_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
+        self.title_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 14)
+        self.lore_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 7)
 
         # Podpowiedź zbierania
         self.show_collect_hint = False
         self.show_collectible_hint = False
-        self.hint_font = pygame.font.Font('Czcionki/PressStart2P.ttf', 10)
+        self.hint_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 10)
 
         # System przechowywania w chatce
         self.show_storage_hint = False
+
+        # Hover system
+        self.hovered_item = None  # Index of hovered item or None
+        self.slot_rects = []  # Will store slot rectangles for hover detection
 
     def pick_up_cat(self, cat_index):
         """Podnosi kotka na ręce. Zwraca True jeśli udało się podnieść."""
@@ -114,8 +124,11 @@ class Inventory:
 
         # Rysowanie ekwipunku, jeśli jest otwarty (tylko itemy!)
         if self.inventory_open:
-            screen.blit(self.inventory_image, self.inventory_rect)
+            self._draw_inventory_panel(screen)
             self._draw_collected_items(screen)
+            self._check_hover()
+            if self.hovered_item is not None:
+                self._draw_item_tooltip(screen)
 
         # Zawsze rysuj liczniki w rogu ekranu
         self._draw_counters(screen, stored_cats)
@@ -131,6 +144,9 @@ class Inventory:
             self._draw_collect_hint(screen, "item")
         elif self.show_storage_hint and self.carried_cat is not None:
             self._draw_collect_hint(screen, "storage")
+        elif self.carried_cat is not None:
+            # Zawsze pokazuj info o niesieniu kotka gdy nie ma innych podpowiedzi
+            self._draw_collect_hint(screen, "carry_cat")
 
     def _draw_carried_cat(self, screen):
         """Rysuje wskaźnik noszonego kotka w prawym górnym rogu"""
@@ -154,32 +170,127 @@ class Inventory:
         cat_rect = cat_img.get_rect(center=(box_x + box_size // 2, box_y + box_size // 2))
         screen.blit(cat_img, cat_rect)
 
+    def _draw_inventory_panel(self, screen):
+        """Rysuje panel inventory (prostokątny, jak dymek Sprytka)"""
+        # Tło panelu
+        panel_rect = pygame.Rect(self.panel_x, self.panel_y, self.panel_width, self.panel_height)
+        pygame.draw.rect(screen, self.panel_color, panel_rect, border_radius=12)
+        pygame.draw.rect(screen, self.panel_border_color, panel_rect, 3, border_radius=12)
+
+        # Tytuł
+        title_text = "Inventory"
+        title_surface = self.title_font.render(title_text, True, (230, 220, 200))
+        title_x = self.panel_x + (self.panel_width - title_surface.get_width()) // 2
+        screen.blit(title_surface, (title_x, self.panel_y + 15))
+
+        # Linia pod tytułem
+        line_y = self.panel_y + 45
+        pygame.draw.line(screen, self.panel_border_color,
+                        (self.panel_x + 20, line_y),
+                        (self.panel_x + self.panel_width - 20, line_y), 2)
+
     def _draw_collected_items(self, screen):
         """Draw collected items in inventory"""
-        if not self.collected_items:
-            return
+        self.slot_rects = []  # Reset slot rects for hover detection
 
         # Parametry slotów
         slot_size = 50
         slots_per_row = 5
-        start_x = self.inventory_rect.x + 80
-        start_y = self.inventory_rect.y + 80
+        slot_spacing = 12
+        start_x = self.panel_x + (self.panel_width - (slots_per_row * slot_size + (slots_per_row - 1) * slot_spacing)) // 2
+        start_y = self.panel_y + 60
 
+        # Rysuj puste sloty
+        for i in range(10):
+            row = i // slots_per_row
+            col = i % slots_per_row
+
+            slot_x = start_x + col * (slot_size + slot_spacing)
+            slot_y = start_y + row * (slot_size + slot_spacing)
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Tło slotu
+            pygame.draw.rect(screen, (35, 30, 25), slot_rect, border_radius=5)
+            pygame.draw.rect(screen, (80, 70, 60), slot_rect, 2, border_radius=5)
+
+        # Rysuj zebrane itemy
         for i, item_index in enumerate(self.collected_items):
             row = i // slots_per_row
             col = i % slots_per_row
 
-            slot_x = start_x + col * (slot_size + 12)
-            slot_y = start_y + row * (slot_size + 12)
+            slot_x = start_x + col * (slot_size + slot_spacing)
+            slot_y = start_y + row * (slot_size + slot_spacing)
 
-            # Rysuj ramkę slotu
             slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-            pygame.draw.rect(screen, (60, 70, 80), slot_rect, 3, border_radius=5)
+            self.slot_rects.append((slot_rect, item_index))
+
+            # Podświetlenie przy hover
+            if self.hovered_item == i:
+                pygame.draw.rect(screen, (60, 55, 45), slot_rect, border_radius=5)
+                pygame.draw.rect(screen, (200, 180, 120), slot_rect, 2, border_radius=5)
+            else:
+                pygame.draw.rect(screen, (35, 30, 25), slot_rect, border_radius=5)
+                pygame.draw.rect(screen, (80, 70, 60), slot_rect, 2, border_radius=5)
 
             # Rysuj znajdźkę w slocie
             item_img = self.collectible_images[item_index]
             item_rect = item_img.get_rect(center=slot_rect.center)
             screen.blit(item_img, item_rect)
+
+    def _check_hover(self):
+        """Sprawdza czy mysz jest nad którymś slotem"""
+        mouse_pos = pygame.mouse.get_pos()
+        self.hovered_item = None
+
+        for i, (slot_rect, item_index) in enumerate(self.slot_rects):
+            if slot_rect.collidepoint(mouse_pos):
+                self.hovered_item = i
+                break
+
+    def _draw_item_tooltip(self, screen):
+        """Rysuje tooltip z nazwą i lore dla hovera nad itemem"""
+        if self.hovered_item is None or self.hovered_item >= len(self.collected_items):
+            return
+
+        item_index = self.collected_items[self.hovered_item]
+        item_data = COLLECTIBLES_LORE[item_index]
+
+        # Tooltip w dolnej części panelu
+        tooltip_x = self.panel_x + 20
+        tooltip_y = self.panel_y + 190
+        tooltip_width = self.panel_width - 40
+
+        # Nazwa itemu
+        name_surface = self.font.render(item_data["name"], True, (255, 220, 150))
+        screen.blit(name_surface, (tooltip_x, tooltip_y))
+
+        # Lore (pierwsza linia lub więcej)
+        lore_y = tooltip_y + 25
+        text_color = (180, 170, 150)
+        max_width = tooltip_width
+
+        for lore_line in item_data["lore"][:3]:  # Max 3 linie lore
+            # Łamanie tekstu
+            words = lore_line.split(' ')
+            current_line = ""
+
+            for word in words:
+                test_line = current_line + word + " "
+                test_surface = self.lore_font.render(test_line, True, text_color)
+                if test_surface.get_width() <= max_width:
+                    current_line = test_line
+                else:
+                    if current_line:
+                        line_surface = self.lore_font.render(current_line.strip(), True, text_color)
+                        screen.blit(line_surface, (tooltip_x, lore_y))
+                        lore_y += 14
+                    current_line = word + " "
+
+            if current_line:
+                line_surface = self.lore_font.render(current_line.strip(), True, text_color)
+                screen.blit(line_surface, (tooltip_x, lore_y))
+                lore_y += 14
 
     def _draw_counters(self, screen, stored_cats=0):
         """Draw counters for cats and items in corner of screen"""
@@ -212,6 +323,8 @@ class Inventory:
             hint_text = "[F] Pick up cat"
         elif item_type == "storage":
             hint_text = "[G] Put cat on bed"
+        elif item_type == "carry_cat":
+            hint_text = "Bring the cat to the cabin!"
         else:
             hint_text = "[F] Collect item"
 

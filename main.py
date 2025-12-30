@@ -91,7 +91,7 @@ while running:
     # Update game objects
     player.update(keys, clock, npc, background, cabin)
     npc.update(keys, player)
-    enemy_manager.update()
+    enemy_manager.update(clock.get_time())
 
     # Check enemy collision - restart game if hit
     if enemy_manager.check_player_collision(player.player_rect):

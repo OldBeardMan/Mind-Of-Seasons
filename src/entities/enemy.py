@@ -1,27 +1,29 @@
 import pygame
 import random
 
-ENEMY_SIZE = (50, 50)
+ENEMY_SIZE = (80, 80)
 
 
 def load_graphics():
-    """Load enemy graphics - reuse cat sprites with tint."""
-    # Use a cat sprite as base and tint it red to make it look hostile
-    enemy_img = pygame.image.load('Grafiki/NPC/Cat2.png').convert_alpha()
-    enemy_img = pygame.transform.scale(enemy_img, ENEMY_SIZE)
-
-    # Create red tint for hostile appearance
-    tinted = enemy_img.copy()
-    tinted.fill((255, 100, 100), special_flags=pygame.BLEND_RGB_MULT)
-
-    return tinted
+    """Load enemy graphics with animation frames."""
+    frames = []
+    for i in range(1, 5):
+        img = pygame.image.load(f'Grafiki/NPC/Enemy/enemy{i}.png').convert_alpha()
+        img = pygame.transform.scale(img, ENEMY_SIZE)
+        frames.append(img)
+    return frames
 
 
 class Enemy:
     def __init__(self, x, y, tile_size, map_data):
-        self.image = load_graphics()
+        self.animation_frames = load_graphics()
         self.tile_size = tile_size
         self.map_data = map_data
+
+        # Animation state
+        self.current_frame = 0
+        self.animation_timer = 0
+        self.animation_speed = 150  # milliseconds between frames
 
         # Position in pixels
         self.x = x * tile_size
@@ -82,9 +84,15 @@ class Enemy:
 
         return self.direction  # Keep current if no valid direction
 
-    def update(self):
-        """Update enemy position and AI."""
+    def update(self, dt=16):
+        """Update enemy position, AI and animation."""
         self.change_direction_timer += 1
+
+        # Update animation
+        self.animation_timer += dt
+        if self.animation_timer >= self.animation_speed:
+            self.animation_timer = 0
+            self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
 
         # Change direction at random intervals
         if self.change_direction_timer >= self.change_direction_interval:
@@ -118,10 +126,12 @@ class Enemy:
         screen_pos = (self.rect.x - camera_offset[0],
                       self.rect.y - camera_offset[1])
 
+        # Get current animation frame
+        img = self.animation_frames[self.current_frame]
+
         # Flip sprite based on direction
-        img = self.image
         if self.direction == 'left':
-            img = pygame.transform.flip(self.image, True, False)
+            img = pygame.transform.flip(img, True, False)
 
         screen.blit(img, screen_pos)
 
@@ -176,10 +186,10 @@ class EnemyManager:
 
         return selected
 
-    def update(self):
+    def update(self, dt=16):
         """Update all enemies."""
         for enemy in self.enemies:
-            enemy.update()
+            enemy.update(dt)
 
     def check_player_collision(self, player_rect):
         """Check if player collides with any enemy."""

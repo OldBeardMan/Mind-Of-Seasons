@@ -382,7 +382,7 @@ class Background:
                 pos = (x - camera_offset[0], y - camera_offset[1])
                 screen.blit(self.leaves_animation[self.leaves_frame], pos)
 
-    def draw(self, screen, camera_offset, player, cabin=None, enemy_manager=None):
+    def draw(self, screen, camera_offset, player, cabin=None, enemy_manager=None, is_brewing=False, brew_progress=0):
         """Draw all background layers."""
         self.draw_base_map(screen, camera_offset)
         # Cabin floor (under player)
@@ -395,6 +395,6 @@ class Background:
         self.draw_trees(screen, camera_offset)
         # Cabin walls/roof/furniture (over player when inside)
         if cabin:
-            cabin.draw_upper(screen, camera_offset, self.cat_images)
+            cabin.draw_upper(screen, camera_offset, self.cat_images, is_brewing, brew_progress)
         self.draw_cats(screen, camera_offset)
         self.draw_collectibles(screen, camera_offset)

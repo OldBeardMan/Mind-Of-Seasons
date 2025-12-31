@@ -25,9 +25,14 @@ class Player:
         self.animation_speed = 200
 
         # Movement state
-        self.speed = 5
+        self.base_speed = 5
+        self.speed = self.base_speed
         self.is_walking = False
         self.facing_right = True
+
+        # Fatigue system
+        self.fatigue = 100.0  # 0-100 scale (100 = fully awake)
+        self.fatigue_decay = 0.0093  # per frame (~3 min to empty at 60fps)
 
         # Position
         if spawn_position:
@@ -104,3 +109,30 @@ class Player:
         screen_pos = (self.player_rect.x - camera_offset[0],
                       self.player_rect.y - camera_offset[1])
         screen.blit(self.image, screen_pos)
+
+    def update_fatigue(self, dt):
+        """Update fatigue level (decreases over time)."""
+        self.fatigue -= self.fatigue_decay
+        if self.fatigue < 0:
+            self.fatigue = 0
+
+        # Update speed based on fatigue
+        if self.fatigue < 30:
+            # Linear slowdown from 100% to 40% speed as fatigue goes 30 -> 0
+            fatigue_factor = max(0.4, self.fatigue / 30)
+            self.speed = self.base_speed * fatigue_factor
+        else:
+            self.speed = self.base_speed
+
+    def drink_coffee(self):
+        """Restore fatigue to full."""
+        self.fatigue = 100.0
+        self.speed = self.base_speed
+
+    def get_fatigue_percent(self):
+        """Get current fatigue as percentage (0-100)."""
+        return self.fatigue
+
+    def is_exhausted(self):
+        """Check if player is completely exhausted."""
+        return self.fatigue <= 0

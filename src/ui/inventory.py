@@ -75,6 +75,14 @@ class Inventory:
         self.hovered_item = None  # Index of hovered item or None
         self.slot_rects = []  # Will store slot rectangles for hover detection
 
+        # Coffee thermos system
+        self.has_coffee = False
+        self.show_coffee_hint = False
+        self.coffee_hint_type = "brew"  # "brew" or "drink"
+
+        # Fatigue bar animation
+        self.fatigue_flash_timer = 0
+
     def pick_up_cat(self, cat_index):
         """Podnosi kotka na ręce. Zwraca True jeśli udało się podnieść."""
         if self.carried_cat is None:
@@ -108,7 +116,28 @@ class Inventory:
         """Ustawia czy pokazywać podpowiedź odkładania kotka"""
         self.show_storage_hint = show
 
-    def update_inventory(self, keys, screen, stored_cats=0):
+    # Coffee thermos methods
+    def fill_thermos(self):
+        """Fill the coffee thermos."""
+        self.has_coffee = True
+
+    def drink_coffee(self):
+        """Drink coffee from thermos. Returns True if had coffee."""
+        if self.has_coffee:
+            self.has_coffee = False
+            return True
+        return False
+
+    def has_coffee_available(self):
+        """Check if thermos has coffee."""
+        return self.has_coffee
+
+    def set_coffee_hint(self, show, hint_type="brew"):
+        """Set coffee hint visibility and type."""
+        self.show_coffee_hint = show
+        self.coffee_hint_type = hint_type
+
+    def update_inventory(self, keys, screen, stored_cats=0, fatigue=100):
         # Zmienna do śledzenia, czy ekwipunek jest otwarty
         if keys[pygame.K_e] and not self.toggle_pressed:
             self.inventory_open = not self.inventory_open
@@ -119,6 +148,11 @@ class Inventory:
 
         # Rysowanie ekwipunku, jeśli jest otwarty (tylko itemy!)
         if self.inventory_open:
+            # Dark overlay
+            overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 150))
+            screen.blit(overlay, (0, 0))
+
             self._draw_inventory_panel(screen)
             self._draw_collected_items(screen)
             self._check_hover()
@@ -126,14 +160,16 @@ class Inventory:
                 self._draw_item_tooltip(screen)
 
         # Zawsze rysuj liczniki w rogu ekranu
-        self._draw_counters(screen, stored_cats)
+        self._draw_counters(screen, stored_cats, fatigue)
 
         # Rysuj wskaźnik noszonego kotka
         if self.carried_cat is not None:
             self._draw_carried_cat(screen)
 
-        # Rysuj podpowiedź
-        if self.show_collect_hint and self.carried_cat is None:
+        # Rysuj podpowiedź (coffee brew hint only - drink hint is shown in panel)
+        if self.show_coffee_hint and self.coffee_hint_type == "brew":
+            self._draw_collect_hint(screen, "coffee_brew")
+        elif self.show_collect_hint and self.carried_cat is None:
             self._draw_collect_hint(screen, "cat")
         elif self.show_collectible_hint:
             self._draw_collect_hint(screen, "item")
@@ -287,30 +323,122 @@ class Inventory:
                 screen.blit(line_surface, (tooltip_x, lore_y))
                 lore_y += 14
 
-    def _draw_counters(self, screen, stored_cats=0):
-        """Draw counters for cats and items in corner of screen"""
+    def _draw_counters(self, screen, stored_cats=0, fatigue=100):
+        """Draw counters: kittens/collectibles at top-left, energy/coffee at bottom-left"""
         padding = 6
+
+        # ========== TOP-LEFT: Kittens and Collectibles ==========
         y_offset = 10
 
-        # Cats counter (w chatce) - tylko liczba
-        cat_text = f"{stored_cats}/5"
+        # Kittens counter
+        cat_text = f"{stored_cats}/5 Kittens"
         cat_surface = self.font.render(cat_text, True, (255, 220, 150))
+        cat_bg_width = cat_surface.get_width() + padding * 2
+        cat_bg_height = cat_surface.get_height() + padding * 2
 
-        cat_bg_rect = pygame.Rect(10, y_offset, cat_surface.get_width() + padding * 2, cat_surface.get_height() + padding * 2)
-        pygame.draw.rect(screen, (50, 50, 50, 180), cat_bg_rect, border_radius=6)
-        pygame.draw.rect(screen, (100, 80, 60), cat_bg_rect, 2, border_radius=6)
+        cat_bg_surface = pygame.Surface((cat_bg_width, cat_bg_height), pygame.SRCALPHA)
+        pygame.draw.rect(cat_bg_surface, (50, 50, 50, 180), (0, 0, cat_bg_width, cat_bg_height), border_radius=6)
+        pygame.draw.rect(cat_bg_surface, (100, 80, 60), (0, 0, cat_bg_width, cat_bg_height), 2, border_radius=6)
+        screen.blit(cat_bg_surface, (10, y_offset))
         screen.blit(cat_surface, (10 + padding, y_offset + padding))
 
-        y_offset += cat_bg_rect.height + 5
+        y_offset += cat_bg_height + 5
 
-        # Items counter - tylko liczba
-        item_text = f"{len(self.collected_items)}/10"
+        # Collectibles counter
+        item_text = f"{len(self.collected_items)}/10 Collectibles"
         item_surface = self.font.render(item_text, True, (150, 200, 255))
+        item_bg_width = item_surface.get_width() + padding * 2
+        item_bg_height = item_surface.get_height() + padding * 2
 
-        item_bg_rect = pygame.Rect(10, y_offset, item_surface.get_width() + padding * 2, item_surface.get_height() + padding * 2)
-        pygame.draw.rect(screen, (50, 50, 50, 180), item_bg_rect, border_radius=6)
-        pygame.draw.rect(screen, (60, 80, 100), item_bg_rect, 2, border_radius=6)
+        item_bg_surface = pygame.Surface((item_bg_width, item_bg_height), pygame.SRCALPHA)
+        pygame.draw.rect(item_bg_surface, (50, 50, 50, 180), (0, 0, item_bg_width, item_bg_height), border_radius=6)
+        pygame.draw.rect(item_bg_surface, (60, 80, 100), (0, 0, item_bg_width, item_bg_height), 2, border_radius=6)
+        screen.blit(item_bg_surface, (10, y_offset))
         screen.blit(item_surface, (10 + padding, y_offset + padding))
+
+        # ========== BOTTOM-LEFT: Coffee Energy Panel ==========
+        margin = 15
+        panel_width = 180
+        panel_height = 95
+        panel_x = margin
+        panel_y = self.screen_height - margin - panel_height
+
+        # Panel background with proper rounded corners
+        panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        pygame.draw.rect(panel_surface, (30, 30, 30, 200), (0, 0, panel_width, panel_height), border_radius=10)
+        pygame.draw.rect(panel_surface, (80, 70, 60), (0, 0, panel_width, panel_height), 2, border_radius=10)
+        screen.blit(panel_surface, (panel_x, panel_y))
+
+        current_y = panel_y + 8
+
+        # === COFFEE ENERGY LABEL ===
+        energy_label = self.small_font.render("Coffee Energy", True, (180, 160, 120))
+        screen.blit(energy_label, (panel_x + 8, current_y))
+        current_y += energy_label.get_height() + 4
+
+        bar_width = panel_width - 16
+        bar_height = 14
+        bar_x = panel_x + 8
+        bar_y = current_y
+
+        # Energy bar with proper rounded corners
+        bar_surface = pygame.Surface((bar_width, bar_height), pygame.SRCALPHA)
+        pygame.draw.rect(bar_surface, (40, 40, 40), (0, 0, bar_width, bar_height), border_radius=4)
+
+        # Fill color based on fatigue
+        if fatigue > 50:
+            fill_color = (139, 90, 43)
+        elif fatigue > 20:
+            fill_color = (180, 100, 30)
+        else:
+            self.fatigue_flash_timer += 1
+            if self.fatigue_flash_timer % 30 < 15:
+                fill_color = (200, 50, 50)
+            else:
+                fill_color = (140, 40, 40)
+
+        fill_width = int((bar_width * fatigue) / 100)
+        if fill_width > 0:
+            pygame.draw.rect(bar_surface, fill_color, (0, 0, fill_width, bar_height), border_radius=4)
+
+        pygame.draw.rect(bar_surface, (100, 80, 60), (0, 0, bar_width, bar_height), 2, border_radius=4)
+        screen.blit(bar_surface, (bar_x, bar_y))
+
+        current_y += bar_height + 10
+
+        # === COFFEE CUP ===
+        cup_x = panel_x + 8
+        cup_y = current_y
+        cup_bg_width = 44
+        cup_bg_height = 36
+
+        # Cup background with proper rounded corners
+        cup_surface = pygame.Surface((cup_bg_width, cup_bg_height), pygame.SRCALPHA)
+        pygame.draw.rect(cup_surface, (50, 45, 40), (0, 0, cup_bg_width, cup_bg_height), border_radius=6)
+        screen.blit(cup_surface, (cup_x, cup_y))
+
+        mug_x = cup_x + 6
+        mug_y = cup_y + 4
+        pygame.draw.rect(screen, (120, 90, 60), (mug_x, mug_y + 6, 24, 22), border_radius=3)
+        pygame.draw.arc(screen, (120, 90, 60), (mug_x + 22, mug_y + 10, 10, 14), -1.5, 1.5, 3)
+
+        if self.has_coffee:
+            pygame.draw.rect(screen, (70, 45, 25), (mug_x + 3, mug_y + 10, 18, 14), border_radius=2)
+            pygame.draw.line(screen, (220, 220, 220), (mug_x + 8, mug_y + 4), (mug_x + 6, mug_y - 2), 2)
+            pygame.draw.line(screen, (220, 220, 220), (mug_x + 16, mug_y + 4), (mug_x + 18, mug_y - 3), 2)
+            pygame.draw.rect(screen, (180, 140, 80), (cup_x, cup_y, cup_bg_width, cup_bg_height), 2, border_radius=6)
+        else:
+            pygame.draw.rect(screen, (60, 60, 60), (cup_x, cup_y, cup_bg_width, cup_bg_height), 2, border_radius=6)
+
+        label_x = cup_x + cup_bg_width + 8
+        if self.has_coffee:
+            coffee_label = self.small_font.render("Ready!", True, (180, 140, 80))
+            screen.blit(coffee_label, (label_x, cup_y + 2))
+            hint_surface = self.hint_font.render("[V] Drink", True, (255, 220, 150))
+            screen.blit(hint_surface, (label_x, cup_y + 18))
+        else:
+            coffee_label = self.small_font.render("Empty", True, (120, 120, 120))
+            screen.blit(coffee_label, (label_x, cup_y + 10))
 
     def _draw_collect_hint(self, screen, item_type="cat"):
         """Draw hint for collecting cat or item"""
@@ -320,6 +448,12 @@ class Inventory:
             hint_text = "[G] Put cat on bed"
         elif item_type == "carry_cat":
             hint_text = "Bring the cat to the cabin!"
+        elif item_type == "coffee_brew":
+            hint_text = "[C] Brew coffee"
+        elif item_type == "coffee_drink":
+            hint_text = "[V] Drink coffee"
+        elif item_type == "item":
+            hint_text = "[F] Collect item"
         else:
             hint_text = "[F] Collect item"
 

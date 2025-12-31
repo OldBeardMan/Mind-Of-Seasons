@@ -128,8 +128,8 @@ def preload_all_assets():
     # NPC Sprytek (60x70)
     get_image('graphics/npc/sprytek.png', (60, 70))
 
-    # Preload all font sizes used in the game
-    for size in [7, 8, 10, 12, 14, 16]:
+    # Preload all font sizes used in the game (including menu fonts)
+    for size in [7, 8, 9, 10, 12, 14, 16, 20, 24, 28, 32, 36]:
         get_font(size)
 
 
@@ -188,6 +188,14 @@ def clear_cache():
     global _image_cache, _font_cache, _map_cache, _tree_cache, _enemy_spawn_cache
     _image_cache.clear()
     _font_cache.clear()
+    _map_cache.clear()
+    _tree_cache.clear()
+    _enemy_spawn_cache.clear()
+
+
+def clear_all_caches():
+    """Clear map and game-related caches (keeps images/fonts for performance)."""
+    global _map_cache, _tree_cache, _enemy_spawn_cache
     _map_cache.clear()
     _tree_cache.clear()
     _enemy_spawn_cache.clear()

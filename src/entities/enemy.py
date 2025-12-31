@@ -41,7 +41,7 @@ class Enemy:
 
         # Chase behavior
         self.is_chasing = False
-        self.chase_distance = 200  # pixels - dystans wykrycia gracza
+        self.chase_distance = 150  # pixels - dystans wykrycia gracza
         self.lose_distance = 350  # pixels - dystans utraty gracza
 
     def _is_walkable(self, tile_x, tile_y):
@@ -248,14 +248,14 @@ class EnemyManager:
         return False
 
     def _find_spawn_positions(self, spawn_point, num_enemies):
-        """Find valid spawn positions on paths/grass, away from player spawn and trees."""
+        """Find valid spawn positions on paths only, away from player spawn."""
         valid_positions = []
         min_distance_from_spawn = 15  # tiles
 
         for y in range(len(self.map_data)):
             for x in range(len(self.map_data[y])):
-                # Nie spawnuj w pobliżu drzew (drzewa są większe niż 1 tile)
-                if self._is_near_tree(x, y, radius=2):
+                # Spawn only on paths (not grass between trees)
+                if self.map_data[y][x] != 'path':
                     continue
 
                 # Check distance from spawn

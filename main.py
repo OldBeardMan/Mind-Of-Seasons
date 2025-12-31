@@ -46,7 +46,7 @@ def init_game():
     npc = Npc(SCREEN_WIDTH, SCREEN_HEIGHT, x=sprytek_pos[0], y=sprytek_pos[1])
 
     # Enemies spawn (not in trees)
-    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, background.tree_positions, num_enemies=100)
+    enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, background.tree_positions, num_enemies=50)
 
     return background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, MAP_WIDTH, MAP_HEIGHT
 
@@ -77,9 +77,8 @@ while running:
 
         # Still render background but don't update game logic
         camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
-        background.draw(screen, camera_offset, player, cabin)
+        background.draw(screen, camera_offset, player, cabin, enemy_manager)
         npc.draw_sprytek(screen, camera_offset)
-        enemy_manager.draw(screen, camera_offset)
         background.draw_leaves(screen, camera_offset)
         stored_cats = cabin.get_stored_cat_count()
         inventory.update_inventory(keys, screen, stored_cats)
@@ -162,9 +161,8 @@ while running:
     camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
 
     # Render
-    background.draw(screen, camera_offset, player, cabin)
+    background.draw(screen, camera_offset, player, cabin, enemy_manager)
     npc.draw_sprytek(screen, camera_offset)
-    enemy_manager.draw(screen, camera_offset)
     background.draw_leaves(screen, camera_offset)
     stored_cats = cabin.get_stored_cat_count()
     inventory.update_inventory(keys, screen, stored_cats)

@@ -1,5 +1,5 @@
 import pygame
-from src.utils import resource_path
+from src.utils import get_font
 
 
 def create_placeholder(size, color, name):
@@ -13,7 +13,7 @@ def create_placeholder(size, color, name):
 
     # Try to render name if font is available
     try:
-        font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
+        font = get_font(8)
         # Split name if too long
         words = name.split()
         y_offset = size[1] // 2 - (len(words) * 10) // 2
@@ -40,11 +40,10 @@ class LoreDisplay:
         self.f_key_pressed = False
         self.cooldown = 0
 
-        # Fonts
-        pygame.font.init()
-        self.title_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 16)
-        self.text_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 10)
-        self.hint_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
+        # Fonts (uses cache)
+        self.title_font = get_font(16)
+        self.text_font = get_font(10)
+        self.hint_font = get_font(8)
 
         # Window dimensions
         self.window_width = 500

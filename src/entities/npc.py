@@ -1,96 +1,24 @@
 
-# TODO Kolizja ze sprytkiem nie jest precyzyjna, kiedyś mozna to poprawić
+# TODO Collision with Sprytek is not precise, can be improved later
+import json
 import pygame
-from src.utils import resource_path
+from src.utils import get_image, get_font, resource_path
 
-#ładowanie grafiki sprytka
+
+# Load Sprytek graphics (uses cache)
 def load_sprytek():
-    image_sprytek=pygame.image.load(resource_path('Grafiki/NPC/Sprytek.png'))
-    image_sprytek=pygame.transform.scale(image_sprytek,(60,70))
-    return image_sprytek
+    return get_image('graphics/npc/sprytek.png', (60, 70))
 
-# Sprytek Dialogs
-SPRYTEK_DIALOGS = [
-    {
-        "id": "greeting",
-        "texts": [
-            "Hello! I am Sprytek!",
-            "I am so glad you found me!",
-            "I am your personal helper and emotional support!",
-            "Press F to talk to me!"
-        ]
-    },
-    {
-        "id": "quest_intro",
-        "texts": [
-            # Intro 1
-            "You are probably wondering why you are here.",
-            "Many are wondering but cannot find an answer.",
-            "But I hope we can find something else...",
-            "Or someone else.",
-            # Intro 2
-            "I came here with my master and 20 other kittens one day.",
-            "He said he wanted to rest a bit.",
-            "He built this cabin and kinda the forest around us.",
-            "He was building with his music.",
-            # Intro 3
-            "One day he was ready to return home.",
-            "But then these weird creatures started to spawn.",
-            "Right after he composed 'Do Not Listen'...",
-            "Things got messy.",
-            # Intro 4
-            "He really wanted to return, but these creatures got him.",
-            "He just disappeared one day... I am too afraid to go find him.",
-            "I really hope he left some clues for us,",
-            "so we can find him.",
-            # Intro 5
-            "Please go search for the kittens, they all ran away when he disappeared.",
-            "Maybe you will find some clues about him as well!",
-            "And remember to drink coffee as well! This place can be really demanding.",
-            "You can make a cup inside the cabin.",
-            # Intro 6
-            "Go search for the lost kittens while I wait here for you.",
-            "Bring them one by one to this safe cabin.",
-            "Be aware of the creatures lurking in the forest.",
-            "And don't forget your coffee!"
-        ]
-    },
-    {
-        "id": "encouragement_1",
-        "texts": [
-            "You are doing great!",
-            "Keep searching for cats!"
-        ]
-    },
-    {
-        "id": "encouragement_2",
-        "texts": [
-            "Did you take your coffee?",
-            "It's really important!"
-        ]
-    },
-    {
-        "id": "encouragement_3",
-        "texts": [
-            "Be aware of the creatures.",
-            "You don't want to listen to them."
-        ]
-    },
-    {
-        "id": "random_1",
-        "texts": [
-            "He was very afraid.",
-            "I wonder where he went."
-        ]
-    },
-    {
-        "id": "random_2",
-        "texts": [
-            "Do you hear them? The creatures?",
-            "They are whispering something..."
-        ]
-    }
-]
+
+def _load_dialogs():
+    """Load Sprytek dialogs from JSON file."""
+    with open(resource_path('data/dialogs.json'), 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return data.get('sprytek', [])
+
+
+# Load dialogs from JSON
+SPRYTEK_DIALOGS = _load_dialogs()
 
 class Npc:
     def __init__(self, screen_width, screen_height, x, y):
@@ -115,10 +43,9 @@ class Npc:
         self.player_near = False
         self.f_key_pressed = False
 
-        # Font do tekstu dialogu (pixelowy)
-        pygame.font.init()
-        self.dialog_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 10)
-        self.hint_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
+        # Font do tekstu dialogu (pixelowy) - uses cache
+        self.dialog_font = get_font(10)
+        self.hint_font = get_font(8)
 
     # Rysuj sprytka mając na uwadze camere offset
     def draw_sprytek(self, screen, camera_offset):

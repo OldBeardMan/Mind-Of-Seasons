@@ -1,0 +1,77 @@
+{
+    "sprytek": [
+        {
+            "id": "greeting",
+            "texts": [
+                "Hello! I am Sprytek!",
+                "I am so glad you found me!",
+                "I am your personal helper and emotional support!",
+                "Press F to talk to me!"
+            ]
+        },
+        {
+            "id": "quest_intro",
+            "texts": [
+                "You are probably wondering why you are here.",
+                "Many are wondering but cannot find an answer.",
+                "But I hope we can find something else...",
+                "Or someone else.",
+                "I came here with my master and 20 other kittens one day.",
+                "He said he wanted to rest a bit.",
+                "He built this cabin and kinda the forest around us.",
+                "He was building with his music.",
+                "One day he was ready to return home.",
+                "But then these weird creatures started to spawn.",
+                "Right after he composed 'Do Not Listen'...",
+                "Things got messy.",
+                "He really wanted to return, but these creatures got him.",
+                "He just disappeared one day... I am too afraid to go find him.",
+                "I really hope he left some clues for us,",
+                "so we can find him.",
+                "Please go search for the kittens, they all ran away when he disappeared.",
+                "Maybe you will find some clues about him as well!",
+                "And remember to drink coffee as well! This place can be really demanding.",
+                "You can make a cup inside the cabin.",
+                "Go search for the lost kittens while I wait here for you.",
+                "Bring them one by one to this safe cabin.",
+                "Be aware of the creatures lurking in the forest.",
+                "And don't forget your coffee!"
+            ]
+        },
+        {
+            "id": "encouragement_1",
+            "texts": [
+                "You are doing great!",
+                "Keep searching for cats!"
+            ]
+        },
+        {
+            "id": "encouragement_2",
+            "texts": [
+                "Did you take your coffee?",
+                "It's really important!"
+            ]
+        },
+        {
+            "id": "encouragement_3",
+            "texts": [
+                "Be aware of the creatures.",
+                "You don't want to listen to them."
+            ]
+        },
+        {
+            "id": "random_1",
+            "texts": [
+                "He was very afraid.",
+                "I wonder where he went."
+            ]
+        },
+        {
+            "id": "random_2",
+            "texts": [
+                "Do you hear them? The creatures?",
+                "They are whispering something..."
+            ]
+        }
+    ]
+}

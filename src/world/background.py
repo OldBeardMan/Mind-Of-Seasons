@@ -2,7 +2,7 @@ import pygame
 import random
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
-from src.utils import resource_path
+from src.utils import get_image, get_map_data, get_cached_trees, set_cached_trees
 
 # Constants
 TILE_SIZE = 64
@@ -12,40 +12,33 @@ COLLECTIBLE_SIZE = 48
 
 
 def load_graphics():
-    """Load and scale all background graphics."""
+    """Load and scale all background graphics (uses cache)."""
     # Base tile
-    tile_image = pygame.image.load(resource_path('Grafiki/Landscape/kafelek.png')).convert_alpha()
-    tile_image = pygame.transform.scale(tile_image, (TILE_SIZE, TILE_SIZE))
+    tile_image = get_image('graphics/landscape/tile.png', (TILE_SIZE, TILE_SIZE))
 
     # Animated leaves
     leaves_animation = []
     for i in range(5):
-        leaves_img = pygame.image.load(resource_path(f'Grafiki/Landscape/Leaves/{i}.png')).convert_alpha()
-        leaves_img = pygame.transform.scale(leaves_img, (128, 128))
+        leaves_img = get_image(f'graphics/landscape/leaves/{i}.png', (128, 128))
         leaves_animation.append(leaves_img)
 
     # Trees
     tree_images = []
     for i in range(1, 3):
-        tree_img = pygame.image.load(resource_path(f'Grafiki/Landscape/Tree{i}.png')).convert_alpha()
-        tree_img = pygame.transform.scale(tree_img, (TREE_SIZE, TREE_SIZE))
+        tree_img = get_image(f'graphics/landscape/tree{i}.png', (TREE_SIZE, TREE_SIZE))
         tree_images.append(tree_img)
 
     # Path
-    path_image = pygame.image.load(resource_path('Grafiki/Landscape/path.png')).convert_alpha()
-    path_image = pygame.transform.scale(path_image, (TILE_SIZE, TILE_SIZE))
+    path_image = get_image('graphics/landscape/path.png', (TILE_SIZE, TILE_SIZE))
 
     # Cats - load existing images or create placeholders for 5 lore cats
     cat_images = []
     for cat in CATS_LORE:
         if "image" in cat:
-            try:
-                cat_img = pygame.image.load(resource_path(f'Grafiki/NPC/{cat["image"]}')).convert_alpha()
-                cat_img = pygame.transform.scale(cat_img, (TREE_SIZE // 2, TREE_SIZE // 2))
-            except:
+            cat_img = get_image(f'graphics/npc/{cat["image"]}', (TREE_SIZE // 2, TREE_SIZE // 2))
+            if cat_img is None:
                 cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), cat["color"], cat["name"])
         else:
-            # Create placeholder for cats without graphics
             cat_img = create_placeholder((TREE_SIZE // 2, TREE_SIZE // 2), cat["color"], cat["name"])
         cat_images.append(cat_img)
 
@@ -53,10 +46,8 @@ def load_graphics():
     collectible_images = []
     for item in COLLECTIBLES_LORE:
         if "image" in item:
-            try:
-                coll_img = pygame.image.load(resource_path(f'Grafiki/Landscape/{item["image"]}')).convert_alpha()
-                coll_img = pygame.transform.scale(coll_img, (COLLECTIBLE_SIZE, COLLECTIBLE_SIZE))
-            except:
+            coll_img = get_image(f'graphics/landscape/{item["image"]}', (COLLECTIBLE_SIZE, COLLECTIBLE_SIZE))
+            if coll_img is None:
                 coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
         else:
             coll_img = create_placeholder((COLLECTIBLE_SIZE, COLLECTIBLE_SIZE), item["color"], item["name"])
@@ -86,20 +77,28 @@ class Background:
 
         # Load map and generate elements
         self.map_data = self._load_map(MAP_FILE)
-        self.tree_positions = self._generate_trees()
-        self.tree_chunks = self._build_tree_chunks()
-        self.collision_chunks = self._build_collision_chunks()
+
+        # Cache key includes spawn_point for cabin clearing
+        cache_key = (map_width, map_height, spawn_point)
+        cached = get_cached_trees(cache_key)
+        if cached:
+            # Use cached trees (already cleared around cabin)
+            self.tree_positions = cached['trees'][:]
+            self.tree_chunks = {k: v[:] for k, v in cached['tree_chunks'].items()}
+            self.collision_chunks = {k: v[:] for k, v in cached['collision_chunks'].items()}
+            self._trees_cache_used = True
+        else:
+            self.tree_positions = self._generate_trees()
+            self.tree_chunks = self._build_tree_chunks()
+            self.collision_chunks = self._build_collision_chunks()
+            self._trees_cache_used = False
+
         self.cat_positions = self._setup_cats(cat_positions) if cat_positions else self._generate_cats()
         self.collectible_positions = self._setup_collectibles(collectible_positions) if collectible_positions else self._generate_collectibles()
 
     def _load_map(self, filename):
-        """Load map from file."""
-        map_data = []
-        with open(resource_path(filename), 'r') as f:
-            for line in f:
-                row = ['path' if c == '1' else 'grass' for c in line.strip()]
-                map_data.append(row)
-        return map_data
+        """Load map from file (uses cache)."""
+        return get_map_data(filename)
 
     def _is_isolated_grass(self, x, y):
         """Check if grass tile has no adjacent paths."""
@@ -124,6 +123,10 @@ class Background:
 
     def clear_trees_in_area(self, min_x, min_y, max_x, max_y):
         """Remove trees in specified area and rebuild chunks."""
+        # Skip if cache was used (trees already cleared)
+        if getattr(self, '_trees_cache_used', False):
+            return
+
         self.tree_positions = [
             (x, y, idx) for x, y, idx in self.tree_positions
             if not (min_x <= x <= max_x and min_y <= y <= max_y)
@@ -131,6 +134,10 @@ class Background:
         # Rebuild chunks
         self.tree_chunks = self._build_tree_chunks()
         self.collision_chunks = self._build_collision_chunks()
+
+        # Cache the result for future respawns
+        cache_key = (self.map_width, self.map_height, self.spawn_point)
+        set_cached_trees(cache_key, self.tree_positions, self.tree_chunks, self.collision_chunks)
 
     def _build_tree_chunks(self):
         """Build spatial chunks for trees."""

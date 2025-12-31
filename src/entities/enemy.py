@@ -1,26 +1,26 @@
 import pygame
 import random
-from src.utils import resource_path
+from src.utils import get_image, get_cached_enemy_spawns, set_cached_enemy_spawns
 
 ENEMY_SIZE = (80, 80)
 
 
 def load_graphics():
-    """Load enemy graphics with animation frames."""
+    """Load enemy graphics with animation frames (uses cache)."""
     frames = []
     for i in range(1, 5):
-        img = pygame.image.load(resource_path(f'Grafiki/NPC/Enemy/enemy{i}.png')).convert_alpha()
-        img = pygame.transform.scale(img, ENEMY_SIZE)
+        img = get_image(f'graphics/npc/enemy/enemy{i}.png', ENEMY_SIZE)
         frames.append(img)
     return frames
 
 
 class Enemy:
-    def __init__(self, x, y, tile_size, map_data, tree_positions=None):
+    def __init__(self, x, y, tile_size, map_data, tree_tiles=None):
         self.animation_frames = load_graphics()
         self.tile_size = tile_size
         self.map_data = map_data
-        self.tree_tiles = set((tx, ty) for tx, ty, _ in (tree_positions or []))
+        # tree_tiles is now passed as a shared set from EnemyManager
+        self.tree_tiles = tree_tiles or set()
 
         # Animation state
         self.current_frame = 0
@@ -224,11 +224,19 @@ class EnemyManager:
         self.tree_tiles = set((tx, ty) for tx, ty, _ in self.tree_positions)
         self.enemies = []
 
-        # Find valid positions for spawning (excluding trees and area near spawn)
-        spawn_positions = self._find_spawn_positions(spawn_point, num_enemies)
+        # Try to use cached spawn positions (huge performance gain on respawn)
+        cache_key = (len(map_data), len(map_data[0]) if map_data else 0, spawn_point, num_enemies)
+        cached_positions = get_cached_enemy_spawns(cache_key)
 
+        if cached_positions:
+            spawn_positions = cached_positions
+        else:
+            spawn_positions = self._find_spawn_positions(spawn_point, num_enemies)
+            set_cached_enemy_spawns(cache_key, spawn_positions)
+
+        # Create enemies with shared tree_tiles set (huge performance gain)
         for pos in spawn_positions:
-            enemy = Enemy(pos[0], pos[1], tile_size, map_data, tree_positions)
+            enemy = Enemy(pos[0], pos[1], tile_size, map_data, self.tree_tiles)
             self.enemies.append(enemy)
 
     def _is_near_tree(self, x, y, radius=2):

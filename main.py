@@ -2,6 +2,7 @@ import pygame
 from src.world import map_initialization, Background, calculate_camera_offset, Cabin
 from src.entities import Player, Npc, EnemyManager
 from src.ui import Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE
+from src.utils import preload_all_assets
 
 # Initialize Pygame
 pygame.init()
@@ -10,6 +11,9 @@ screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
 clock = pygame.time.Clock()
 pygame.display.set_caption("Mind of Seasons")
+
+# Preload all assets at startup (prevents lag on respawn)
+preload_all_assets()
 
 
 def init_game():

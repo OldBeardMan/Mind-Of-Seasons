@@ -1,18 +1,16 @@
 import pygame
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
-from src.utils import resource_path
+from src.utils import get_image, get_font
 
 
 def load_cat_images():
-    """Ładuje obrazki kotków do wyświetlania"""
+    """Load cat images for display (uses cache)"""
     cat_images = []
     for cat in CATS_LORE:
         if "image" in cat:
-            try:
-                cat_img = pygame.image.load(resource_path(f'Grafiki/NPC/{cat["image"]}')).convert_alpha()
-                cat_img = pygame.transform.scale(cat_img, (50, 50))
-            except:
+            cat_img = get_image(f'graphics/npc/{cat["image"]}', (50, 50))
+            if cat_img is None:
                 cat_img = create_placeholder((50, 50), cat["color"], cat["name"])
         else:
             cat_img = create_placeholder((50, 50), cat["color"], cat["name"])
@@ -21,14 +19,12 @@ def load_cat_images():
 
 
 def load_collectible_images():
-    """Ładuje obrazki znajdziek do wyświetlania w inventory"""
+    """Load collectible images for inventory display (uses cache)"""
     coll_images = []
     for item in COLLECTIBLES_LORE:
         if "image" in item:
-            try:
-                coll_img = pygame.image.load(resource_path(f'Grafiki/Landscape/{item["image"]}')).convert_alpha()
-                coll_img = pygame.transform.scale(coll_img, (40, 40))
-            except:
+            coll_img = get_image(f'graphics/landscape/{item["image"]}', (40, 40))
+            if coll_img is None:
                 coll_img = create_placeholder((40, 40), item["color"], item["name"])
         else:
             coll_img = create_placeholder((40, 40), item["color"], item["name"])
@@ -61,17 +57,16 @@ class Inventory:
         # System noszenia kotka na rękach (tylko jeden naraz!)
         self.carried_cat = None  # Indeks noszonego kotka lub None
 
-        # Font do wyświetlania licznika (pixelowy)
-        pygame.font.init()
-        self.font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 12)
-        self.small_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 8)
-        self.title_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 14)
-        self.lore_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 7)
+        # Font do wyświetlania licznika (pixelowy) - uses cache
+        self.font = get_font(12)
+        self.small_font = get_font(8)
+        self.title_font = get_font(14)
+        self.lore_font = get_font(7)
 
         # Podpowiedź zbierania
         self.show_collect_hint = False
         self.show_collectible_hint = False
-        self.hint_font = pygame.font.Font(resource_path('Czcionki/PressStart2P.ttf'), 10)
+        self.hint_font = get_font(10)
 
         # System przechowywania w chatce
         self.show_storage_hint = False

@@ -1,0 +1,101 @@
+[
+    {
+        "id": "item_1",
+        "name": "Piano",
+        "lore": [
+            "An old piano, weathered by time.",
+            "Its keys still play a melody you don't want to listen to.",
+            "Music echoes through the seasons..."
+        ],
+        "color": [40, 40, 40],
+        "image": "piano.png"
+    },
+    {
+        "id": "item_2",
+        "name": "Printer",
+        "lore": [
+            "From his desk... I can't believe it's the same one...",
+            "This thing has started it all!",
+            "But it worked before... Why doesn't it work here?"
+        ],
+        "color": [150, 100, 70]
+    },
+    {
+        "id": "item_3",
+        "name": "In The Autumn Forest CD",
+        "lore": [
+            "The things you find are getting very weird.",
+            "How can we find the album which we are inside?",
+            "Maybe we should forget about this."
+        ],
+        "color": [200, 100, 255]
+    },
+    {
+        "id": "item_4",
+        "name": "Acoustic Bass",
+        "lore": [
+            "Oh! It's his!",
+            "After all, maybe you should give it back to him?",
+            "Why did he leave this behind?"
+        ],
+        "color": [180, 170, 150]
+    },
+    {
+        "id": "item_5",
+        "name": "Lukasz Krupa Plushie",
+        "lore": [
+            "lmao"
+        ],
+        "color": [100, 200, 150]
+    },
+    {
+        "id": "item_6",
+        "name": "Wool",
+        "lore": [
+            "The ancient thing... uh.. person?",
+            "It is the core.",
+            "It is..."
+        ],
+        "color": [230, 220, 200]
+    },
+    {
+        "id": "item_7",
+        "name": "MC Music Disc",
+        "lore": [
+            "Oh! The letter and numbers guy!",
+            "He inspired the one we are looking for!",
+            "Pure classic."
+        ],
+        "color": [200, 180, 220]
+    },
+    {
+        "id": "item_8",
+        "name": "Return Sign",
+        "lore": [
+            "Yeah, ok, a return sign, I see, but...",
+            "It doesn't point anywhere...",
+            "So I guess we are sure he didn't return..."
+        ],
+        "color": [130, 130, 130]
+    },
+    {
+        "id": "item_9",
+        "name": "Saturn",
+        "lore": [
+            "OMG SATURN, or satrun depends...",
+            "I think you know what it is."
+        ],
+        "color": [180, 120, 60]
+    },
+    {
+        "id": "item_10",
+        "name": "Compass Pointing West",
+        "lore": [
+            "Is it broken? It points only west.",
+            "I can see he was searching the way out really hard.",
+            "But how can you find it with (heart made of stone)",
+            "broken tools?"
+        ],
+        "color": [220, 240, 255]
+    }
+]

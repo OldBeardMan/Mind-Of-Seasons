@@ -1,0 +1,60 @@
+[
+    {
+        "id": "cat_1",
+        "name": "Water",
+        "lore": [
+            "You found Water, the eldest of the lost cats.",
+            "He was once searching for a cure for depression.",
+            "He didn't find one.",
+            "His wisdom guided many use.. travelers through the forest... and showers."
+        ],
+        "color": [255, 150, 50],
+        "image": "cat2.png"
+    },
+    {
+        "id": "cat_2",
+        "name": "Peanut",
+        "lore": [
+            "Peanut emerges from the darkness.",
+            "This mysterious cat has been liking peanut butter for a long time.",
+            "Some say he is hungry all the time. Others say he never wants to eat.",
+            "His master just forgot about him.",
+            "Or maybe he is just a glitch?"
+        ],
+        "color": [80, 80, 100],
+        "image": "cat3.png"
+    },
+    {
+        "id": "cat_3",
+        "name": "Bit",
+        "lore": [
+            "Bit wasn't welcomed at once.",
+            "Someone said he is too chaotic.",
+            "He just needed some work to flourish.",
+            "He remembers when he listened...",
+            "He remembers it all."
+        ],
+        "color": [200, 200, 230],
+        "image": "cat5.png"
+    },
+    {
+        "id": "cat_4",
+        "name": "Block",
+        "lore": [
+            "Block, born from the last warmth of the city.",
+            "He doesn't belong in the wild, but he desires it.",
+            "But is he really in the wild? Is it real?"
+        ],
+        "color": [230, 100, 50]
+    },
+    {
+        "id": "cat_5",
+        "name": "scanner",
+        "lore": [
+            "What? scanner?",
+            "I have never heard of scanner.",
+            "'[REDACTED] real.' He said..."
+        ],
+        "color": [150, 220, 255]
+    }
+]

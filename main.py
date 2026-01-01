@@ -161,8 +161,8 @@ def init_new_game(slot, seed=None):
     clear_all_caches()
 
     # Initialize map with new seed
-    cat_positions, spawn_pt, used_seed = map_initialization(
-        MAP_WIDTH, MAP_HEIGHT, num_cats=5, seed=seed, force_regenerate=True
+    grid, cat_positions, spawn_pt, used_seed = map_initialization(
+        MAP_WIDTH, MAP_HEIGHT, num_cats=5, seed=seed
     )
 
     # Fallback values if map data is missing
@@ -178,7 +178,7 @@ def init_new_game(slot, seed=None):
     play_time_start = time.time()
 
     # Create game objects
-    background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, cat_positions, spawn_point=spawn_point)
+    background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, cat_positions, spawn_point=spawn_point, grid=grid)
     player = Player(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, spawn_position=spawn_point)
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
     lore_display = LoreDisplay(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -222,8 +222,8 @@ def load_saved_game(slot):
 
     # Load map with saved seed
     saved_seed = save_data.get('map_seed')
-    cat_positions, spawn_pt, used_seed = map_initialization(
-        MAP_WIDTH, MAP_HEIGHT, num_cats=5, seed=saved_seed, force_regenerate=True
+    grid, cat_positions, spawn_pt, used_seed = map_initialization(
+        MAP_WIDTH, MAP_HEIGHT, num_cats=5, seed=saved_seed
     )
 
     if spawn_pt is None:
@@ -243,7 +243,7 @@ def load_saved_game(slot):
 
     # Create game objects
     background = Background(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT,
-                           remaining_cats if remaining_cats else cat_positions, spawn_point=spawn_point)
+                           remaining_cats if remaining_cats else cat_positions, spawn_point=spawn_point, grid=grid)
 
     # Restore player state
     player_data = save_data.get('player', {})
@@ -331,10 +331,10 @@ def save_current_game():
 
 
 def restart_current_game():
-    """Restart the current game (same slot, new seed)."""
+    """Restart the current game (same slot, same map)."""
     if current_slot is None:
         return
-    init_new_game(current_slot)
+    init_new_game(current_slot, seed=map_seed)
 
 
 # Preload assets during loading screen

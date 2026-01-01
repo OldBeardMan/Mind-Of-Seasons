@@ -1,7 +1,5 @@
 import random
-import os
 import math
-from src.utils import resource_path
 
 
 def generate_map(width, height, scale=15.0, octaves=4, num_cats=5, seed=None):
@@ -126,64 +124,20 @@ def _draw_path(grid, start, end, width, height):
             break
 
 
-def _save_grid(grid, filename):
-    """Save map grid to file."""
-    with open(resource_path(filename), "w") as f:
-        for row in grid:
-            f.write(''.join(str(cell) for cell in row) + "\n")
-
-
-def _save_map_data(cat_positions, spawn_point, seed, filename):
-    """Save cat positions, spawn point, and seed to file."""
-    with open(resource_path(filename), "w") as f:
-        f.write(f"seed:{seed}\n")
-        f.write(f"spawn:{spawn_point[0]},{spawn_point[1]}\n")
-        for x, y in cat_positions:
-            f.write(f"cat:{x},{y}\n")
-
-
-def _load_map_data(filename):
-    """Load cat positions, spawn point, and seed from file."""
-    cat_positions = []
-    spawn_point = None
-    seed = None
-    try:
-        with open(resource_path(filename), "r") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("seed:"):
-                    seed = int(line[5:])
-                elif line.startswith("spawn:"):
-                    coords = line[6:].split(",")
-                    spawn_point = (int(coords[0]), int(coords[1]))
-                elif line.startswith("cat:"):
-                    coords = line[4:].split(",")
-                    cat_positions.append((int(coords[0]), int(coords[1])))
-    except FileNotFoundError:
-        pass
-    return cat_positions, spawn_point, seed
-
-
-def map_initialization(width, height, map_file="map.txt", data_file="map_data.txt", num_cats=5, seed=None, force_regenerate=False):
+def map_initialization(width, height, num_cats=5, seed=None):
     """
-    Initialize map. Generates new map if it doesn't exist or force_regenerate is True.
+    Initialize map by generating from seed.
+
+    The map is always generated from seed - no file storage needed.
+    The seed is stored in save files for persistence.
 
     Args:
         width: Map width in tiles
         height: Map height in tiles
-        map_file: Path to map grid file
-        data_file: Path to map data file
         num_cats: Number of cats to place
         seed: Optional seed for reproducible generation
-        force_regenerate: If True, always generate a new map
 
-    Returns: (cat_positions, spawn_point, seed)
+    Returns: (grid, cat_positions, spawn_point, seed)
     """
-    if force_regenerate or not os.path.isfile(map_file):
-        grid, cat_positions, spawn_point, used_seed = generate_map(width, height, num_cats=num_cats, seed=seed)
-        _save_grid(grid, map_file)
-        _save_map_data(cat_positions, spawn_point, used_seed, data_file)
-        return cat_positions, spawn_point, used_seed
-
-    cat_positions, spawn_point, loaded_seed = _load_map_data(data_file)
-    return cat_positions, spawn_point, loaded_seed
+    grid, cat_positions, spawn_point, used_seed = generate_map(width, height, num_cats=num_cats, seed=seed)
+    return grid, cat_positions, spawn_point, used_seed

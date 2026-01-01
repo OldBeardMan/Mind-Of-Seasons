@@ -2,12 +2,11 @@ import pygame
 import random
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
-from src.utils import get_image, get_map_data, get_cached_trees, set_cached_trees
+from src.utils import get_image, get_cached_trees, set_cached_trees
 
 # Constants
 TILE_SIZE = 64
 TREE_SIZE = 128
-MAP_FILE = "map.txt"
 COLLECTIBLE_SIZE = 48
 
 
@@ -57,7 +56,7 @@ def load_graphics():
 
 
 class Background:
-    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None, collectible_positions=None, spawn_point=None):
+    def __init__(self, map_width, map_height, tile_size, screen_width, screen_height, cat_positions=None, collectible_positions=None, spawn_point=None, grid=None):
         self.tile_image, self.leaves_animation, self.tree_images, self.path_image, self.cat_images, self.collectible_images = load_graphics()
         self.map_width = map_width
         self.map_height = map_height
@@ -75,8 +74,8 @@ class Background:
         # Spatial partitioning chunk size (in tiles)
         self.chunk_size = 16
 
-        # Load map and generate elements
-        self.map_data = self._load_map(MAP_FILE)
+        # Convert grid to map_data format
+        self.map_data = self._convert_grid(grid)
 
         # Cache key includes spawn_point for cabin clearing
         cache_key = (map_width, map_height, spawn_point)
@@ -96,9 +95,11 @@ class Background:
         self.cat_positions = self._setup_cats(cat_positions) if cat_positions else self._generate_cats()
         self.collectible_positions = self._setup_collectibles(collectible_positions) if collectible_positions else self._generate_collectibles()
 
-    def _load_map(self, filename):
-        """Load map from file (uses cache)."""
-        return get_map_data(filename)
+    def _convert_grid(self, grid):
+        """Convert grid (0/1 strings) to map_data format (path/grass)."""
+        if grid is None:
+            return []
+        return [['path' if cell == '1' else 'grass' for cell in row] for row in grid]
 
     def _is_isolated_grass(self, x, y):
         """Check if grass tile has no adjacent paths."""

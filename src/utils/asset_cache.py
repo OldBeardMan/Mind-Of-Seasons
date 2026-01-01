@@ -133,32 +133,6 @@ def preload_all_assets():
         get_font(size)
 
 
-def get_map_data(filename):
-    """
-    Load and cache map data from file.
-
-    Args:
-        filename: Relative path to map file
-
-    Returns:
-        List of lists containing map data (each cell is 'path' or 'grass')
-    """
-    if filename in _map_cache:
-        # Return a deep copy to prevent modifications affecting cache
-        return [row[:] for row in _map_cache[filename]]
-
-    # Load map from file
-    map_data = []
-    with open(resource_path(filename), 'r') as f:
-        for line in f:
-            row = ['path' if c == '1' else 'grass' for c in line.strip()]
-            map_data.append(row)
-
-    _map_cache[filename] = map_data
-    # Return a copy to prevent modifications affecting cache
-    return [row[:] for row in map_data]
-
-
 def get_cached_trees(cache_key):
     """Get cached tree positions if available."""
     return _tree_cache.get(cache_key)

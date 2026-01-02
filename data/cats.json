@@ -45,7 +45,8 @@
             "He doesn't belong in the wild, but he desires it.",
             "But is he really in the wild? Is it real?"
         ],
-        "color": [230, 100, 50]
+        "color": [230, 100, 50],
+        "image": "cat17.png"
     },
     {
         "id": "cat_5",
@@ -55,6 +56,7 @@
             "I have never heard of scanner.",
             "'[REDACTED] real.' He said..."
         ],
-        "color": [150, 220, 255]
+        "color": [150, 220, 255],
+        "image": "cat18.png"
     }
 ]

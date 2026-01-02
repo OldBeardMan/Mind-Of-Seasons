@@ -12,13 +12,14 @@
     },
     {
         "id": "item_2",
-        "name": "Printer",
+        "name": "printer",
         "lore": [
             "From his desk... I can't believe it's the same one...",
             "This thing has started it all!",
             "But it worked before... Why doesn't it work here?"
         ],
-        "color": [150, 100, 70]
+        "color": [150, 100, 70],
+        "image": "printer.png"
     },
     {
         "id": "item_3",
@@ -38,7 +39,8 @@
             "After all, maybe you should give it back to him?",
             "Why did he leave this behind?"
         ],
-        "color": [180, 170, 150]
+        "color": [180, 170, 150],
+        "image": "bass.png"
     },
     {
         "id": "item_5",
@@ -46,7 +48,8 @@
         "lore": [
             "lmao"
         ],
-        "color": [100, 200, 150]
+        "color": [100, 200, 150],
+        "image": "lukaszplushiee.jpg"
     },
     {
         "id": "item_6",

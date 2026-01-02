@@ -30,7 +30,13 @@ class Enemy:
         # Position in pixels
         self.x = x * tile_size
         self.y = y * tile_size
-        self.rect = pygame.Rect(self.x, self.y, ENEMY_SIZE[0], ENEMY_SIZE[1])
+        # Hitbox smaller than sprite (centered)
+        hitbox_w = 40
+        hitbox_h = 40
+        hitbox_offset_x = (ENEMY_SIZE[0] - hitbox_w) // 2
+        hitbox_offset_y = (ENEMY_SIZE[1] - hitbox_h) // 2
+        self.hitbox_offset = (hitbox_offset_x, hitbox_offset_y)
+        self.rect = pygame.Rect(self.x + hitbox_offset_x, self.y + hitbox_offset_y, hitbox_w, hitbox_h)
 
         # Movement
         self.speed = 1.5
@@ -153,24 +159,24 @@ class Enemy:
             # Spróbuj ruchu pełnego
             if self._can_move_to(new_rect):
                 self.rect = new_rect
-                self.x = self.rect.x
-                self.y = self.rect.y
+                self.x = self.rect.x - self.hitbox_offset[0]
+                self.y = self.rect.y - self.hitbox_offset[1]
             else:
                 # Spróbuj ruchu tylko w X
                 new_rect_x = self.rect.copy()
                 new_rect_x.x += move_x
                 if self._can_move_to(new_rect_x):
                     self.rect = new_rect_x
-                    self.x = self.rect.x
-                    self.y = self.rect.y
+                    self.x = self.rect.x - self.hitbox_offset[0]
+                    self.y = self.rect.y - self.hitbox_offset[1]
                 else:
                     # Spróbuj ruchu tylko w Y
                     new_rect_y = self.rect.copy()
                     new_rect_y.y += move_y
                     if self._can_move_to(new_rect_y):
                         self.rect = new_rect_y
-                        self.x = self.rect.x
-                        self.y = self.rect.y
+                        self.x = self.rect.x - self.hitbox_offset[0]
+                        self.y = self.rect.y - self.hitbox_offset[1]
         else:
             # Random direction change when not chasing
             if self.change_direction_timer >= self.change_direction_interval:
@@ -192,8 +198,8 @@ class Enemy:
             # Move if possible
             if self._can_move_to(new_rect):
                 self.rect = new_rect
-                self.x = self.rect.x
-                self.y = self.rect.y
+                self.x = self.rect.x - self.hitbox_offset[0]
+                self.y = self.rect.y - self.hitbox_offset[1]
 
     def check_collision(self, player_rect):
         """Check collision with player."""
@@ -201,8 +207,9 @@ class Enemy:
 
     def draw(self, screen, camera_offset):
         """Draw enemy with camera offset."""
-        screen_pos = (self.rect.x - camera_offset[0],
-                      self.rect.y - camera_offset[1])
+        # Draw sprite at visual position (not hitbox position)
+        screen_pos = (self.x - camera_offset[0],
+                      self.y - camera_offset[1])
 
         # Get current animation frame
         img = self.animation_frames[self.current_frame]

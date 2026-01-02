@@ -29,7 +29,8 @@
             "How can we find the album which we are inside?",
             "Maybe we should forget about this."
         ],
-        "color": [200, 100, 255]
+        "color": [200, 100, 255],
+        "image": "itafCD.png"
     },
     {
         "id": "item_4",

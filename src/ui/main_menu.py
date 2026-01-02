@@ -415,7 +415,7 @@ class MainMenu:
         center_y = self.screen_height // 2
 
         # Dialog box
-        dialog_width = 220
+        dialog_width = 280
         dialog_height = 80
         dialog_rect = pygame.Rect(center_x - dialog_width // 2, center_y - dialog_height // 2,
                                    dialog_width, dialog_height)

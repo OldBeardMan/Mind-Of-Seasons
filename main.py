@@ -456,7 +456,7 @@ while running:
             camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
             background.draw(screen, camera_offset, player, cabin, enemy_manager)
             npc.draw_sprytek(screen, camera_offset)
-            background.draw_leaves(screen, camera_offset)
+            background.draw_leaf_particles(screen, camera_offset)
             game_over_screen.draw(screen)
             pygame.display.flip()
             clock.tick(60)
@@ -469,7 +469,7 @@ while running:
             camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
             background.draw(screen, camera_offset, player, cabin, enemy_manager)
             npc.draw_sprytek(screen, camera_offset)
-            background.draw_leaves(screen, camera_offset)
+            background.draw_leaf_particles(screen, camera_offset)
             stored_cats = cabin.get_stored_cat_count()
             inventory.update_inventory(keys, screen, stored_cats, player.get_fatigue_percent())
             npc.draw_chat_graphics(screen, player, camera_offset)
@@ -586,12 +586,22 @@ while running:
         if is_brewing:
             brew_progress = 1.0 - (brew_timer / 3000)
 
+        # Update leaf particles (world-based)
+        dt = clock.get_time() / 1000.0  # Convert ms to seconds
+        background.update_leaf_particles(dt, camera_offset, cabin)
+
         background.draw(screen, camera_offset, player, cabin, enemy_manager, is_brewing, brew_progress)
         npc.draw_sprytek(screen, camera_offset)
-        background.draw_leaves(screen, camera_offset)
+
+        # Draw leaf particles (world-based overlay)
+        background.draw_leaf_particles(screen, camera_offset)
+
         stored_cats = cabin.get_stored_cat_count()
         inventory.update_inventory(keys, screen, stored_cats, player.get_fatigue_percent())
         npc.draw_chat_graphics(screen, player, camera_offset)
+
+        # Draw cabin arrow indicator when cabin is off-screen
+        background.draw_cabin_arrow(screen, player.player_rect, cabin, camera_offset)
 
         # Update and draw tutorial if active
         if tutorial is not None and tutorial.is_active:
@@ -634,8 +644,11 @@ while running:
         camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
         background.draw(screen, camera_offset, player, cabin, enemy_manager)
         npc.draw_sprytek(screen, camera_offset)
-        background.draw_leaves(screen, camera_offset)
+        background.draw_leaf_particles(screen, camera_offset)
         stored_cats = cabin.get_stored_cat_count()
+        # Close inventory and block toggle during pause
+        inventory.inventory_open = False
+        inventory.toggle_pressed = True  # Block E key from opening inventory
         inventory.update_inventory(keys, screen, stored_cats, player.get_fatigue_percent())
         npc.draw_chat_graphics(screen, player, camera_offset)
 
@@ -660,7 +673,7 @@ while running:
             camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
             background.draw(screen, camera_offset, player, cabin, enemy_manager)
             npc.draw_sprytek(screen, camera_offset)
-            background.draw_leaves(screen, camera_offset)
+            background.draw_leaf_particles(screen, camera_offset)
         else:
             screen.fill((25, 25, 35))
 

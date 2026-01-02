@@ -5,10 +5,11 @@ from src.world import map_initialization, Background, calculate_camera_offset, C
 from src.entities import Player, Npc, EnemyManager
 from src.ui import (
     Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE, GameOverScreen,
-    LoadingScreen, MainMenu, PauseMenu, OptionsMenu, CreditsScreen, GAME_TITLE
+    LoadingScreen, MainMenu, PauseMenu, OptionsMenu, CreditsScreen, GAME_TITLE,
+    TutorialSystem
 )
 from src.utils import preload_all_assets, clear_all_caches, resource_path
-from src.save_system import save_game, load_game, load_settings, delete_save, get_save_dir
+from src.save_system import save_game, load_game, load_settings, save_settings, delete_save, get_save_dir
 
 
 # Game States
@@ -74,6 +75,7 @@ cabin = None
 npc = None
 enemy_manager = None
 spawn_point = None
+tutorial = None
 
 # Collection state
 collect_cooldown = 0
@@ -150,7 +152,7 @@ def toggle_fullscreen(fullscreen):
 
 def init_new_game(slot, seed=None):
     """Initialize a new game in the given slot."""
-    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point
+    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial
     global current_slot, map_seed, play_time, play_time_start
     global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
@@ -206,10 +208,18 @@ def init_new_game(slot, seed=None):
     is_brewing = False
     brew_timer = 0
 
+    # Start tutorial if not completed yet
+    current_settings = load_settings()
+    if not current_settings.get('tutorial_completed', False):
+        tutorial = TutorialSystem(SCREEN_WIDTH, SCREEN_HEIGHT)
+        tutorial.start()
+    else:
+        tutorial = None
+
 
 def load_saved_game(slot):
     """Load a game from the given slot."""
-    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point
+    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial
     global current_slot, map_seed, play_time, play_time_start
     global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
@@ -290,6 +300,9 @@ def load_saved_game(slot):
     v_key_pressed = False
     is_brewing = False
     brew_timer = 0
+
+    # No tutorial for loaded games
+    tutorial = None
 
     return True
 
@@ -466,8 +479,9 @@ while running:
             clock.tick(60)
             continue
 
-        # Update game objects
-        player.update(keys, clock, npc, background, cabin)
+        # Update game objects (don't move player when inventory is open)
+        if not inventory.inventory_open:
+            player.update(keys, clock, npc, background, cabin)
         npc.update(keys, player)
         enemy_manager.update(clock.get_time(), player.player_rect)
 
@@ -578,6 +592,17 @@ while running:
         stored_cats = cabin.get_stored_cat_count()
         inventory.update_inventory(keys, screen, stored_cats, player.get_fatigue_percent())
         npc.draw_chat_graphics(screen, player, camera_offset)
+
+        # Update and draw tutorial if active
+        if tutorial is not None and tutorial.is_active:
+            tutorial.update(keys, npc, inventory)
+            tutorial.draw(screen)
+
+            # Save settings when tutorial is completed
+            if tutorial.is_completed():
+                current_settings = load_settings()
+                current_settings['tutorial_completed'] = True
+                save_settings(current_settings)
 
     # === PAUSED STATE ===
     elif current_state == GameState.PAUSED:

@@ -250,7 +250,7 @@ class EnemyManager:
     def _find_spawn_positions(self, spawn_point, num_enemies):
         """Find valid spawn positions on paths only, away from player spawn."""
         valid_positions = []
-        min_distance_from_spawn = 15  # tiles
+        min_distance_from_spawn = 25  # tiles - safe zone around cabin
 
         for y in range(len(self.map_data)):
             for x in range(len(self.map_data[y])):

@@ -200,6 +200,7 @@ def load_settings() -> dict:
         'master_volume': 80,
         'music_volume': 60,
         'sfx_volume': 100,
+        'tutorial_completed': False,
     }
 
     try:

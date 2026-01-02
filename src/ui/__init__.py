@@ -7,3 +7,4 @@ from src.ui.main_menu import MainMenu, GAME_VERSION, GAME_TITLE, STUDIO_NAME
 from src.ui.pause_menu import PauseMenu
 from src.ui.options_menu import OptionsMenu
 from src.ui.credits_screen import CreditsScreen
+from src.ui.tutorial import TutorialSystem

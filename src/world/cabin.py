@@ -215,8 +215,9 @@ class Cabin:
         return (self.sprytek_tile_x * self.tile_size, self.sprytek_tile_y * self.tile_size)
 
     def get_bounds(self):
-        """Get cabin bounding box in tile coordinates (for tree removal)."""
-        return (self.x - 1, self.y - 1, self.x + self.width + 1, self.y + self.height + 2)
+        """Get cabin bounding box in tile coordinates (for tree removal).
+        Extended by 2 tiles in each direction to create clear path around cabin."""
+        return (self.x - 3, self.y - 3, self.x + self.width + 3, self.y + self.height + 4)
 
     def is_player_inside(self, player_rect):
         """Check if player is inside the cabin (on floor tiles)."""

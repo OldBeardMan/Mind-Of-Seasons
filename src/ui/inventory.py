@@ -75,6 +75,13 @@ class Inventory:
         self.hovered_item = None  # Index of hovered item or None
         self.slot_rects = []  # Will store slot rectangles for hover detection
 
+        # Keyboard navigation system
+        self.selected_slot = 0  # Currently selected slot (0-9)
+        self.arrow_cooldown = 0  # Cooldown between arrow presses
+        self.arrow_keys_pressed = {
+            'up': False, 'down': False, 'left': False, 'right': False
+        }
+
         # Coffee thermos system
         self.has_coffee = False
         self.show_coffee_hint = False
@@ -148,6 +155,9 @@ class Inventory:
 
         # Rysowanie ekwipunku, jeśli jest otwarty (tylko itemy!)
         if self.inventory_open:
+            # Handle keyboard navigation
+            self._handle_keyboard_navigation(keys)
+
             # Dark overlay
             overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
@@ -156,8 +166,10 @@ class Inventory:
             self._draw_inventory_panel(screen)
             self._draw_collected_items(screen)
             self._check_hover()
-            if self.hovered_item is not None:
-                self._draw_item_tooltip(screen)
+            # Show tooltip for selected slot (keyboard) or hovered slot (mouse)
+            active_slot = self.hovered_item if self.hovered_item is not None else self._get_selected_item_index()
+            if active_slot is not None:
+                self._draw_item_tooltip(screen, active_slot)
 
         # Zawsze rysuj liczniki w rogu ekranu
         self._draw_counters(screen, stored_cats, fatigue)
@@ -178,6 +190,61 @@ class Inventory:
         elif self.carried_cat is not None:
             # Zawsze pokazuj info o niesieniu kotka gdy nie ma innych podpowiedzi
             self._draw_collect_hint(screen, "carry_cat")
+
+    def _handle_keyboard_navigation(self, keys):
+        """Handle arrow key navigation in inventory."""
+        if self.arrow_cooldown > 0:
+            self.arrow_cooldown -= 1
+            return
+
+        slots_per_row = 5
+        moved = False
+
+        # Left arrow
+        if keys[pygame.K_LEFT] and not self.arrow_keys_pressed['left']:
+            self.arrow_keys_pressed['left'] = True
+            if self.selected_slot % slots_per_row > 0:
+                self.selected_slot -= 1
+                moved = True
+        elif not keys[pygame.K_LEFT]:
+            self.arrow_keys_pressed['left'] = False
+
+        # Right arrow
+        if keys[pygame.K_RIGHT] and not self.arrow_keys_pressed['right']:
+            self.arrow_keys_pressed['right'] = True
+            if self.selected_slot % slots_per_row < slots_per_row - 1:
+                self.selected_slot += 1
+                moved = True
+        elif not keys[pygame.K_RIGHT]:
+            self.arrow_keys_pressed['right'] = False
+
+        # Up arrow
+        if keys[pygame.K_UP] and not self.arrow_keys_pressed['up']:
+            self.arrow_keys_pressed['up'] = True
+            if self.selected_slot >= slots_per_row:
+                self.selected_slot -= slots_per_row
+                moved = True
+        elif not keys[pygame.K_UP]:
+            self.arrow_keys_pressed['up'] = False
+
+        # Down arrow
+        if keys[pygame.K_DOWN] and not self.arrow_keys_pressed['down']:
+            self.arrow_keys_pressed['down'] = True
+            if self.selected_slot < 10 - slots_per_row:
+                self.selected_slot += slots_per_row
+                moved = True
+        elif not keys[pygame.K_DOWN]:
+            self.arrow_keys_pressed['down'] = False
+
+        if moved:
+            self.arrow_cooldown = 8  # Short cooldown between moves
+            self.hovered_item = None  # Clear mouse hover when using keyboard
+
+    def _get_selected_item_index(self):
+        """Get the item index at the selected slot, or None if empty."""
+        if self.selected_slot < len(self.collected_items):
+            return self.selected_slot
+        return None
 
     def _draw_carried_cat(self, screen):
         """Rysuje wskaźnik noszonego kotka w prawym górnym rogu"""
@@ -231,7 +298,7 @@ class Inventory:
         start_x = self.panel_x + (self.panel_width - (slots_per_row * slot_size + (slots_per_row - 1) * slot_spacing)) // 2
         start_y = self.panel_y + 60
 
-        # Rysuj puste sloty
+        # Rysuj wszystkie sloty (puste i z itemami)
         for i in range(10):
             row = i // slots_per_row
             col = i % slots_per_row
@@ -241,33 +308,39 @@ class Inventory:
 
             slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
 
-            # Tło slotu
-            pygame.draw.rect(screen, (35, 30, 25), slot_rect, border_radius=5)
-            pygame.draw.rect(screen, (80, 70, 60), slot_rect, 2, border_radius=5)
+            # Check if this slot is selected (keyboard) or hovered (mouse)
+            is_selected = (i == self.selected_slot)
+            is_hovered = (i < len(self.collected_items) and self.hovered_item == i)
+            has_item = i < len(self.collected_items)
 
-        # Rysuj zebrane itemy
-        for i, item_index in enumerate(self.collected_items):
-            row = i // slots_per_row
-            col = i % slots_per_row
-
-            slot_x = start_x + col * (slot_size + slot_spacing)
-            slot_y = start_y + row * (slot_size + slot_spacing)
-
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-            self.slot_rects.append((slot_rect, item_index))
-
-            # Podświetlenie przy hover
-            if self.hovered_item == i:
+            # Draw slot background based on state
+            if is_hovered:
+                # Mouse hover - brightest highlight
                 pygame.draw.rect(screen, (60, 55, 45), slot_rect, border_radius=5)
                 pygame.draw.rect(screen, (200, 180, 120), slot_rect, 2, border_radius=5)
+            elif is_selected:
+                # Keyboard selection - yellow/gold border
+                pygame.draw.rect(screen, (50, 45, 40), slot_rect, border_radius=5)
+                pygame.draw.rect(screen, (255, 200, 100), slot_rect, 3, border_radius=5)
             else:
+                # Normal slot
                 pygame.draw.rect(screen, (35, 30, 25), slot_rect, border_radius=5)
                 pygame.draw.rect(screen, (80, 70, 60), slot_rect, 2, border_radius=5)
 
-            # Rysuj znajdźkę w slocie
-            item_img = self.collectible_images[item_index]
-            item_rect = item_img.get_rect(center=slot_rect.center)
-            screen.blit(item_img, item_rect)
+            # Draw item if present
+            if has_item:
+                item_index = self.collected_items[i]
+                self.slot_rects.append((slot_rect, item_index))
+                item_img = self.collectible_images[item_index]
+                item_rect = item_img.get_rect(center=slot_rect.center)
+                screen.blit(item_img, item_rect)
+
+        # Draw navigation hint at bottom of panel
+        nav_hint = "Use arrows to navigate"
+        nav_surface = self.small_font.render(nav_hint, True, (120, 110, 100))
+        nav_x = self.panel_x + (self.panel_width - nav_surface.get_width()) // 2
+        nav_y = self.panel_y + self.panel_height - 25
+        screen.blit(nav_surface, (nav_x, nav_y))
 
     def _check_hover(self):
         """Sprawdza czy mysz jest nad którymś slotem"""
@@ -279,12 +352,13 @@ class Inventory:
                 self.hovered_item = i
                 break
 
-    def _draw_item_tooltip(self, screen):
-        """Rysuje tooltip z nazwą i lore dla hovera nad itemem"""
-        if self.hovered_item is None or self.hovered_item >= len(self.collected_items):
+    def _draw_item_tooltip(self, screen, active_slot=None):
+        """Rysuje tooltip z nazwą i lore dla aktywnego slotu (hover lub selected)"""
+        slot_to_show = active_slot if active_slot is not None else self.hovered_item
+        if slot_to_show is None or slot_to_show >= len(self.collected_items):
             return
 
-        item_index = self.collected_items[self.hovered_item]
+        item_index = self.collected_items[slot_to_show]
         item_data = COLLECTIBLES_LORE[item_index]
 
         # Tooltip w dolnej części panelu

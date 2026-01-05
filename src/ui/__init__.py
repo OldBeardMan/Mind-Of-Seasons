@@ -8,3 +8,4 @@ from src.ui.pause_menu import PauseMenu
 from src.ui.options_menu import OptionsMenu
 from src.ui.credits_screen import CreditsScreen
 from src.ui.tutorial import TutorialSystem
+from src.ui.minimap import Minimap

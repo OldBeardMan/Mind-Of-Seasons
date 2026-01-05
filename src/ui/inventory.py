@@ -247,16 +247,16 @@ class Inventory:
         return None
 
     def _draw_carried_cat(self, screen):
-        """Rysuje wskaźnik noszonego kotka w prawym górnym rogu"""
+        """Rysuje wskaźnik noszonego kotka w prawym dolnym rogu"""
         if self.carried_cat is None:
             return
 
-        padding = 10
+        padding = 15
         box_size = 60
 
-        # Pozycja w prawym górnym rogu
+        # Pozycja w prawym dolnym rogu
         box_x = self.screen_width - box_size - padding
-        box_y = padding
+        box_y = self.screen_height - box_size - padding
 
         # Tło ramki
         bg_rect = pygame.Rect(box_x, box_y, box_size, box_size)

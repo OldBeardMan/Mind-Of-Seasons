@@ -1,0 +1,50 @@
+LISTA DZWIEKOW DO ZROBIENIA - Mind of Seasons
+==============================================
+
+RUCH I EKSPLORACJA
+------------------
+[ ] Kroki (trawa) - chodzenie po trawie - zgniec trawe/liscie przy mikrofonie
+[ ] Kroki (sciezka) - chodzenie po path - stukanie po drewnie/podlodze
+[ ] Kroki (kabina) - wewnatrz kabiny - kroki po deskach
+
+INTERAKCJE (klawisz F)
+----------------------
+[ ] Podniesienie kota - F przy kocie - miekkie "miau" + szelest
+[ ] Podniesienie przedmiotu - F przy collectible - krotki "plop" / "swoosh"
+[ ] Dialog NPC - F przy Sprytku - subtelny "blip" jak w Undertale
+
+SYSTEM KAWY
+-----------
+[ ] Parzenie kawy - C key (3 sek) - bulgotanie wody, syk ekspresu
+[ ] Picie kawy - V key - siorbanie, "gulp"
+
+KABINA
+------
+[ ] Odlozenie kota - G key - miekkie "thump" + mruczenie
+[ ] Wejscie do kabiny - przekroczenie progu - skrzypienie drzwi (opcjonalne)
+
+UI / MENU
+---------
+[ ] Hover/select - nawigacja menu - krotki "tick"
+[ ] Confirm - wybor opcji - "click" lub melodyjny dzwiek
+[ ] Open inventory - E key - szelest papieru/torby
+
+GAME OVER / NAPIECIE
+--------------------
+[ ] Voice w poblizu - enemy < 150px - szept, static, niepokojacy ton
+[ ] Zlapany przez Voice - game over - glosny szept + "woosh"
+[ ] Zasniecie - fatigue = 0 - spowolnione bicie serca, cisza
+
+AMBIENT (opcjonalne)
+--------------------
+[ ] Wiatr / liscie - caly czas lekko - loop szumu wiatru
+[ ] Mruczenie kota - kot w inventory - cichy purr loop
+
+NARZEDZIA
+---------
+- sfxr.me / jsfxr - retro dzwieki (UI, power-upy)
+- ChipTone (sfbgames.itch.io/chiptone) - rozbudowany generator
+- Freesound.org - darmowa biblioteka
+- OpenGameArt.org - paczki SFX do gier
+- Kenney.nl/assets - CC0 audio
+- ElevenLabs Sound Effects - AI generator

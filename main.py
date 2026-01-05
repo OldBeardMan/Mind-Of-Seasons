@@ -6,7 +6,7 @@ from src.entities import Player, Npc, EnemyManager
 from src.ui import (
     Inventory, LoreDisplay, CATS_LORE, COLLECTIBLES_LORE, GameOverScreen,
     LoadingScreen, MainMenu, PauseMenu, OptionsMenu, CreditsScreen, GAME_TITLE,
-    TutorialSystem
+    TutorialSystem, Minimap
 )
 from src.utils import preload_all_assets, clear_all_caches, resource_path
 from src.save_system import save_game, load_game, load_settings, save_settings, delete_save, get_save_dir
@@ -76,6 +76,7 @@ npc = None
 enemy_manager = None
 spawn_point = None
 tutorial = None
+minimap = None
 
 # Collection state
 collect_cooldown = 0
@@ -135,7 +136,7 @@ def toggle_fullscreen(fullscreen):
         pause_menu.input_cooldown = 30
 
     # Update game objects if they exist (when toggling during gameplay)
-    global background, inventory, lore_display, npc
+    global background, inventory, lore_display, npc, minimap
     if background is not None:
         background.screen_width = SCREEN_WIDTH
         background.screen_height = SCREEN_HEIGHT
@@ -148,11 +149,13 @@ def toggle_fullscreen(fullscreen):
     if npc is not None:
         npc.screen_width = SCREEN_WIDTH
         npc.screen_height = SCREEN_HEIGHT
+    if minimap is not None:
+        minimap.update_position(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
 def init_new_game(slot, seed=None):
     """Initialize a new game in the given slot."""
-    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial
+    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial, minimap
     global current_slot, map_seed, play_time, play_time_start
     global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
@@ -216,10 +219,13 @@ def init_new_game(slot, seed=None):
     else:
         tutorial = None
 
+    # Create minimap
+    minimap = Minimap(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE)
+
 
 def load_saved_game(slot):
     """Load a game from the given slot."""
-    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial
+    global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial, minimap
     global current_slot, map_seed, play_time, play_time_start
     global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
@@ -304,6 +310,12 @@ def load_saved_game(slot):
     # No tutorial for loaded games
     tutorial = None
 
+    # Create minimap and load visited tiles
+    minimap = Minimap(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE)
+    visited_tiles = save_data.get('visited_tiles', [])
+    if visited_tiles:
+        minimap.set_visited_tiles(visited_tiles)
+
     return True
 
 
@@ -338,6 +350,7 @@ def save_current_game():
             'collected': list(inventory.collected_items),
             'remaining_positions': [(x, y) for x, y, _ in background.collectible_positions],
         },
+        'visited_tiles': minimap.get_visited_tiles() if minimap else [],
     }
 
     return save_game(current_slot, game_state)
@@ -602,6 +615,13 @@ while running:
 
         # Draw cabin arrow indicator when cabin is off-screen
         background.draw_cabin_arrow(screen, player.player_rect, cabin, camera_offset)
+
+        # Update and draw minimap
+        if minimap:
+            player_tile_x = player.player_rect.centerx // TILE_SIZE
+            player_tile_y = player.player_rect.centery // TILE_SIZE
+            minimap.update(player_tile_x, player_tile_y)
+            minimap.draw(screen, background.map_data, player_tile_x, player_tile_y, cabin, background.cat_positions)
 
         # Update and draw tutorial if active
         if tutorial is not None and tutorial.is_active:

@@ -55,6 +55,7 @@ def save_game(slot: int, game_state: dict) -> bool:
             'player': game_state.get('player', {}),
             'cats': game_state.get('cats', {}),
             'collectibles': game_state.get('collectibles', {}),
+            'visited_tiles': game_state.get('visited_tiles', []),
         }
 
         with open(save_path, 'w', encoding='utf-8') as f:
@@ -137,6 +138,12 @@ def get_save_info(slot: int) -> dict | None:
     collected_collectibles = len(collectibles_data.get('collected', []))
     total_collectibles = 10  # Fixed number of collectibles
 
+    # Map exploration percentage
+    visited_tiles = save_data.get('visited_tiles', [])
+    map_size = save_data.get('map_size', [600, 600])
+    total_tiles = map_size[0] * map_size[1]
+    exploration_percent = int((len(visited_tiles) / total_tiles) * 100) if total_tiles > 0 else 0
+
     # Format play time
     play_time_seconds = save_data.get('play_time', 0)
     minutes = int(play_time_seconds // 60)
@@ -148,6 +155,7 @@ def get_save_info(slot: int) -> dict | None:
         'total_cats': total_cats,
         'collected_collectibles': collected_collectibles,
         'total_collectibles': total_collectibles,
+        'exploration_percent': exploration_percent,
         'play_time': play_time_seconds,
         'play_time_formatted': f"{minutes}:{seconds:02d}",
         'is_complete': stored_cats >= total_cats,

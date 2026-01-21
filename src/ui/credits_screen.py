@@ -4,6 +4,7 @@ import pygame
 import random
 from src.utils import get_font, get_image
 from src.ui.main_menu import GAME_VERSION, GAME_TITLE, STUDIO_NAME
+from src.config import TILE_SIZE
 
 
 class CreditsScreen:
@@ -29,7 +30,6 @@ class CreditsScreen:
 
     def _init_background(self):
         """Initialize background with grass tiles and trees."""
-        TILE_SIZE = 64
         TREE_SIZE = 128
 
         self.tile_image = get_image('graphics/landscape/tile.png', (TILE_SIZE, TILE_SIZE))

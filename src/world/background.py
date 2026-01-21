@@ -4,9 +4,9 @@ import math
 from src.ui.lore_display import create_placeholder
 from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
 from src.utils import get_image, get_cached_trees, set_cached_trees
+from src.config import TILE_SIZE
 
 # Constants
-TILE_SIZE = 64
 TREE_SIZE = 128
 COLLECTIBLE_SIZE = 48
 

@@ -4,6 +4,7 @@ import pygame
 import random
 from src.utils import get_font, get_image
 from src.save_system import list_saves, delete_save
+from src.config import TILE_SIZE
 
 
 # Game constants
@@ -57,7 +58,6 @@ class MainMenu:
 
     def _init_background(self):
         """Initialize background with grass tiles and trees."""
-        TILE_SIZE = 64
         TREE_SIZE = 128
 
         # Load graphics

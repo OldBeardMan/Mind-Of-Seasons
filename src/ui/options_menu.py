@@ -4,6 +4,7 @@ import pygame
 import random
 from src.utils import get_font, get_image
 from src.save_system import load_settings, save_settings
+from src.config import TILE_SIZE
 
 
 class OptionsMenu:
@@ -44,7 +45,6 @@ class OptionsMenu:
 
     def _init_background(self):
         """Initialize background with grass tiles and trees."""
-        TILE_SIZE = 64
         TREE_SIZE = 128
 
         self.tile_image = get_image('graphics/landscape/tile.png', (TILE_SIZE, TILE_SIZE))

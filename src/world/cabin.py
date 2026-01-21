@@ -1,7 +1,7 @@
 import pygame
 import random
 
-TILE_SIZE = 64
+from src.config import TILE_SIZE
 
 
 def create_cabin_tiles():

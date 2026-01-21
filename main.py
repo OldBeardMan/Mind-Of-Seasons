@@ -10,6 +10,7 @@ from src.ui import (
 )
 from src.utils import preload_all_assets, clear_all_caches, resource_path
 from src.save_system import save_game, load_game, load_settings, save_settings, delete_save, get_save_dir
+from src.config import TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
 
 
 # Game States
@@ -25,7 +26,6 @@ class GameState:
 
 # Initialize Pygame
 pygame.init()
-TILE_SIZE = 64
 
 # Load settings and set display mode
 settings = load_settings()
@@ -45,8 +45,6 @@ try:
 except Exception:
     pass  # Icon not critical
 
-# Map constants
-MAP_WIDTH, MAP_HEIGHT = 600, 600
 
 # Game state
 current_state = GameState.LOADING
@@ -78,17 +76,25 @@ spawn_point = None
 tutorial = None
 minimap = None
 
-# Collection state
-collect_cooldown = 0
-f_key_pressed = False
-g_key_pressed = False
-c_key_pressed = False
-v_key_pressed = False
-is_brewing = False
-brew_timer = 0
+# Input and collection state
+class InputState:
+    """Holds all input-related state to avoid scattered globals."""
+    def __init__(self):
+        self.reset()
 
-# ESC key state for debouncing
-esc_pressed = False
+    def reset(self):
+        """Reset all input state to defaults."""
+        self.collect_cooldown = 0
+        self.f_key_pressed = False
+        self.g_key_pressed = False
+        self.c_key_pressed = False
+        self.v_key_pressed = False
+        self.is_brewing = False
+        self.brew_timer = 0
+        self.esc_pressed = False
+
+
+input_state = InputState()
 
 
 def toggle_fullscreen(fullscreen):
@@ -157,7 +163,6 @@ def init_new_game(slot, seed=None):
     """Initialize a new game in the given slot."""
     global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial, minimap
     global current_slot, map_seed, play_time, play_time_start
-    global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
     # Delete existing save if any
     delete_save(slot)
@@ -202,14 +207,8 @@ def init_new_game(slot, seed=None):
     # Enemies spawn (not in trees)
     enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, background.tree_positions, num_enemies=50)
 
-    # Reset collection state
-    collect_cooldown = 0
-    f_key_pressed = False
-    g_key_pressed = False
-    c_key_pressed = False
-    v_key_pressed = False
-    is_brewing = False
-    brew_timer = 0
+    # Reset input state
+    input_state.reset()
 
     # Start tutorial if not completed yet
     current_settings = load_settings()
@@ -227,7 +226,6 @@ def load_saved_game(slot):
     """Load a game from the given slot."""
     global background, player, inventory, lore_display, cabin, npc, enemy_manager, spawn_point, tutorial, minimap
     global current_slot, map_seed, play_time, play_time_start
-    global collect_cooldown, f_key_pressed, g_key_pressed, c_key_pressed, v_key_pressed, is_brewing, brew_timer
 
     save_data = load_game(slot)
     if save_data is None:
@@ -298,14 +296,8 @@ def load_saved_game(slot):
     # Enemies
     enemy_manager = EnemyManager(TILE_SIZE, background.map_data, spawn_point, background.tree_positions, num_enemies=50)
 
-    # Reset collection state
-    collect_cooldown = 0
-    f_key_pressed = False
-    g_key_pressed = False
-    c_key_pressed = False
-    v_key_pressed = False
-    is_brewing = False
-    brew_timer = 0
+    # Reset input state
+    input_state.reset()
 
     # No tutorial for loaded games
     tutorial = None
@@ -452,12 +444,12 @@ while running:
     # === PLAYING STATE ===
     elif current_state == GameState.PLAYING:
         # Handle ESC for pause menu
-        if keys[pygame.K_ESCAPE] and not esc_pressed:
+        if keys[pygame.K_ESCAPE] and not input_state.esc_pressed:
             pause_menu.show()
             current_state = GameState.PAUSED
-            esc_pressed = True
+            input_state.esc_pressed = True
         elif not keys[pygame.K_ESCAPE]:
-            esc_pressed = False
+            input_state.esc_pressed = False
 
         # Handle game over screen
         if game_over_screen.is_showing:
@@ -512,61 +504,61 @@ while running:
             continue
 
         # Collection cooldown
-        if collect_cooldown > 0:
-            collect_cooldown -= 1
+        if input_state.collect_cooldown > 0:
+            input_state.collect_cooldown -= 1
 
         # Check cat proximity and handle picking up
         cat_index, cat_image_index = background.check_cat_proximity(player.player_rect)
         if cat_index is not None and not inventory.is_carrying_cat():
             inventory.set_collect_hint(True)
             inventory.set_collectible_hint(False)
-            if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
+            if keys[pygame.K_f] and not input_state.f_key_pressed and not npc.is_talking and input_state.collect_cooldown == 0:
                 collected = background.collect_cat(cat_index)
                 if collected:
                     inventory.pick_up_cat(cat_image_index)
                     lore_display.show_lore(CATS_LORE[cat_image_index], background.cat_images[cat_image_index])
-                    collect_cooldown = 30
+                    input_state.collect_cooldown = 30
         else:
             inventory.set_collect_hint(False)
 
             coll_index, coll_item_index = background.check_collectible_proximity(player.player_rect)
             if coll_index is not None:
                 inventory.set_collectible_hint(True)
-                if keys[pygame.K_f] and not f_key_pressed and not npc.is_talking and collect_cooldown == 0:
+                if keys[pygame.K_f] and not input_state.f_key_pressed and not npc.is_talking and input_state.collect_cooldown == 0:
                     collected = background.collect_collectible(coll_index)
                     if collected:
                         inventory.add_collectible(coll_item_index)
                         lore_display.show_lore(COLLECTIBLES_LORE[coll_item_index], background.collectible_images[coll_item_index])
-                        collect_cooldown = 30
+                        input_state.collect_cooldown = 30
             else:
                 inventory.set_collectible_hint(False)
 
-        f_key_pressed = keys[pygame.K_f]
+        input_state.f_key_pressed = keys[pygame.K_f]
 
         # Check if player is inside cabin
         player_inside_cabin = cabin.is_player_inside(player.player_rect)
         if player_inside_cabin:
             inventory.set_storage_hint(True)
-            if keys[pygame.K_g] and not g_key_pressed and collect_cooldown == 0:
+            if keys[pygame.K_g] and not input_state.g_key_pressed and input_state.collect_cooldown == 0:
                 if inventory.is_carrying_cat():
                     cat_idx = inventory.put_down_cat()
                     if cat_idx is not None:
                         cabin.store_cat(cat_idx)
-                    collect_cooldown = 30
+                    input_state.collect_cooldown = 30
         else:
             inventory.set_storage_hint(False)
 
-        g_key_pressed = keys[pygame.K_g]
+        input_state.g_key_pressed = keys[pygame.K_g]
 
         # Coffee machine interaction
         if player_inside_cabin and cabin.is_near_coffee_machine(player.player_rect):
-            if not is_brewing:
+            if not input_state.is_brewing:
                 if not inventory.has_coffee_available():
                     inventory.set_coffee_hint(True, "brew")
-                    if keys[pygame.K_c] and not c_key_pressed and collect_cooldown == 0:
-                        is_brewing = True
-                        brew_timer = 3000
-                        collect_cooldown = 30
+                    if keys[pygame.K_c] and not input_state.c_key_pressed and input_state.collect_cooldown == 0:
+                        input_state.is_brewing = True
+                        input_state.brew_timer = 3000
+                        input_state.collect_cooldown = 30
                 else:
                     inventory.set_coffee_hint(False)
             else:
@@ -575,35 +567,35 @@ while running:
             inventory.set_coffee_hint(False)
 
         # Brewing process
-        if is_brewing:
-            brew_timer -= clock.get_time()
-            if brew_timer <= 0:
-                is_brewing = False
+        if input_state.is_brewing:
+            input_state.brew_timer -= clock.get_time()
+            if input_state.brew_timer <= 0:
+                input_state.is_brewing = False
                 inventory.fill_thermos()
 
         # Drink coffee
-        if inventory.has_coffee_available() and not is_brewing:
+        if inventory.has_coffee_available() and not input_state.is_brewing:
             if not (player_inside_cabin and cabin.is_near_coffee_machine(player.player_rect)):
                 inventory.set_coffee_hint(True, "drink")
-            if keys[pygame.K_v] and not v_key_pressed and collect_cooldown == 0:
+            if keys[pygame.K_v] and not input_state.v_key_pressed and input_state.collect_cooldown == 0:
                 if inventory.drink_coffee():
                     player.drink_coffee()
-                    collect_cooldown = 30
+                    input_state.collect_cooldown = 30
 
-        c_key_pressed = keys[pygame.K_c]
-        v_key_pressed = keys[pygame.K_v]
+        input_state.c_key_pressed = keys[pygame.K_c]
+        input_state.v_key_pressed = keys[pygame.K_v]
 
         # Render
         camera_offset = calculate_camera_offset(player, MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT)
         brew_progress = 0
-        if is_brewing:
-            brew_progress = 1.0 - (brew_timer / 3000)
+        if input_state.is_brewing:
+            brew_progress = 1.0 - (input_state.brew_timer / 3000)
 
         # Update leaf particles (world-based)
         dt = clock.get_time() / 1000.0  # Convert ms to seconds
         background.update_leaf_particles(dt, camera_offset, cabin)
 
-        background.draw(screen, camera_offset, player, cabin, enemy_manager, is_brewing, brew_progress)
+        background.draw(screen, camera_offset, player, cabin, enemy_manager, input_state.is_brewing, brew_progress)
         npc.draw_sprytek(screen, camera_offset)
 
         # Draw leaf particles (world-based overlay)

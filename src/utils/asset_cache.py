@@ -84,9 +84,8 @@ def preload_all_assets():
     Call this once at game initialization.
     """
     from src.ui.lore_data import CATS_LORE, COLLECTIBLES_LORE
+    from src.config import TILE_SIZE
 
-    # Constants (must match those in background.py)
-    TILE_SIZE = 64
     TREE_SIZE = 128
     COLLECTIBLE_SIZE = 48
 

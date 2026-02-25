@@ -206,7 +206,7 @@ def load_settings() -> dict:
     defaults = {
         'fullscreen': False,
         'master_volume': 80,
-        'music_volume': 60,
+        'music_volume': 30,
         'sfx_volume': 100,
         'tutorial_completed': False,
     }

@@ -10,6 +10,7 @@ from src.ui import (
 )
 from src.utils import preload_all_assets, clear_all_caches, resource_path
 from src.save_system import save_game, load_game, load_settings, save_settings, delete_save, get_save_dir
+from src.audio import MusicManager
 from src.config import TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
 
 
@@ -44,6 +45,10 @@ try:
     pygame.display.set_icon(icon)
 except Exception:
     pass  # Icon not critical
+
+# Music
+music_manager = MusicManager()
+music_manager.set_volume(settings.get('music_volume', 60), settings.get('master_volume', 80))
 
 
 # Game state
@@ -353,6 +358,7 @@ def restart_current_game():
     if current_slot is None:
         return
     init_new_game(current_slot, seed=map_seed)
+    music_manager.start()
 
 
 # Preload assets during loading screen
@@ -379,7 +385,9 @@ while running:
     for event in events:
         if event.type == pygame.QUIT:
             running = False
+        music_manager.handle_event(event)
 
+    music_manager.update()
     keys = pygame.key.get_pressed()
 
     # === LOADING STATE ===
@@ -406,6 +414,7 @@ while running:
             try:
                 init_new_game(data)
                 current_state = GameState.PLAYING
+                music_manager.start()
             except Exception as e:
                 import traceback
                 traceback.print_exc()
@@ -418,6 +427,7 @@ while running:
             try:
                 if load_saved_game(data):
                     current_state = GameState.PLAYING
+                    music_manager.start()
                 else:
                     # Load failed, stay in menu
                     main_menu.refresh_saves()
@@ -447,6 +457,7 @@ while running:
         if keys[pygame.K_ESCAPE] and not input_state.esc_pressed:
             pause_menu.show()
             current_state = GameState.PAUSED
+            music_manager.pause()
             input_state.esc_pressed = True
         elif not keys[pygame.K_ESCAPE]:
             input_state.esc_pressed = False
@@ -632,6 +643,7 @@ while running:
 
         if action == "resume":
             current_state = GameState.PLAYING
+            music_manager.resume()
 
         elif action == "save":
             success = save_current_game()
@@ -644,12 +656,14 @@ while running:
 
         elif action == "main_menu":
             save_current_game()  # Auto-save before leaving
+            music_manager.stop()
             current_state = GameState.MAIN_MENU
             main_menu.state = MainMenu.STATE_MAIN
             main_menu.refresh_saves()
 
         elif action == "quit":
             save_current_game()  # Auto-save before quitting
+            music_manager.stop()
             running = False
 
         # Draw game in background
@@ -675,6 +689,9 @@ while running:
             toggle_fullscreen(data)
 
         elif action == "back":
+            # Sync volume from settings
+            s = options_menu.settings
+            music_manager.set_volume(s.get('music_volume', 60), s.get('master_volume', 80))
             current_state = previous_state if previous_state else GameState.MAIN_MENU
             # Set cooldown to prevent ESC from immediately quitting main menu
             if current_state == GameState.MAIN_MENU:

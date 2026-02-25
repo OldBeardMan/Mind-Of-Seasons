@@ -1,47 +1,78 @@
 LISTA DZWIEKOW DO ZROBIENIA - Mind of Seasons
 ==============================================
 
+STATUS
+------
+[x] MUZYKA - 7 trackow w audio/music/, MusicManager w src/audio/ (Minecraft-style z przerwami)
+[x] PLIKI WAV WYGENEROWANE - 25 plikow w audio/sfx/ (generate_sfx.py)
+[ ] SFX MANAGER - podpiac dzwieki pod eventy w grze (nowy krok!)
+[ ] NAGRANIA SPRYTKA - prawdziwe miau/mruczenie do audio/cat/
+
+CO DALEJ - SFX MANAGER (src/audio/sfx_manager.py)
+--------------------------------------------------
+Trzeba stworzyc SfxManager ktory:
+1. Laduje wszystkie WAV z audio/sfx/ przez pygame.mixer.Sound
+2. Podpina sie pod eventy w kodzie gry:
+   - player.py: kroki (grass/path/cabin zalezne od tile), pickup kota/przedmiotu
+   - npc: dialog blip
+   - inventory: open/close
+   - coffee system: brew (C), drink (V)
+   - cabin: cat place (G), door creak
+   - enemy_manager: whisper ambient (bliskosc), enemy catch (game over)
+   - ui: hover, confirm
+   - game over: heartbeat (fatigue smierc)
+3. Obsluguje sfx_volume z ustawien (slider juz jest)
+4. Ambient loops: wind_loop, whisper przy enemy
+
 RUCH I EKSPLORACJA
 ------------------
-[ ] Kroki (trawa) - chodzenie po trawie - zgniec trawe/liscie przy mikrofonie
-[ ] Kroki (sciezka) - chodzenie po path - stukanie po drewnie/podlodze
-[ ] Kroki (kabina) - wewnatrz kabiny - kroki po deskach
+[x] Kroki (trawa) - footstep_grass_1-4.wav (synteza)
+[x] Kroki (sciezka) - footstep_path_1-4.wav (synteza)
+[x] Kroki (kabina) - footstep_cabin_1-4.wav (synteza)
 
 INTERAKCJE (klawisz F)
 ----------------------
-[ ] Podniesienie kota - F przy kocie - miekkie "miau" + szelest
-[ ] Podniesienie przedmiotu - F przy collectible - krotki "plop" / "swoosh"
-[ ] Dialog NPC - F przy Sprytku - subtelny "blip" jak w Undertale
+[x] Podniesienie przedmiotu - item_pickup.wav (synteza)
+[x] Dialog NPC - dialog_blip.wav (synteza)
+[ ] Podniesienie kota - POTRZEBNE PRAWDZIWE NAGRANIE SPRYTKA -> audio/cat/
 
 SYSTEM KAWY
 -----------
-[ ] Parzenie kawy - C key (3 sek) - bulgotanie wody, syk ekspresu
-[ ] Picie kawy - V key - siorbanie, "gulp"
+[x] Parzenie kawy - coffee_brew.wav (synteza, 3 sek)
+[x] Picie kawy - coffee_drink.wav (synteza)
 
 KABINA
 ------
-[ ] Odlozenie kota - G key - miekkie "thump" + mruczenie
-[ ] Wejscie do kabiny - przekroczenie progu - skrzypienie drzwi (opcjonalne)
+[x] Odlozenie kota - cat_place.wav (synteza)
+[x] Wejscie do kabiny - door_creak.wav (synteza)
 
 UI / MENU
 ---------
-[ ] Hover/select - nawigacja menu - krotki "tick"
-[ ] Confirm - wybor opcji - "click" lub melodyjny dzwiek
-[ ] Open inventory - E key - szelest papieru/torby
+[x] Hover/select - ui_hover.wav (synteza)
+[x] Confirm - ui_confirm.wav (synteza)
+[x] Open inventory - inventory_open.wav (synteza)
 
 GAME OVER / NAPIECIE
 --------------------
-[ ] Voice w poblizu - enemy < 150px - szept, static, niepokojacy ton
-[ ] Zlapany przez Voice - game over - glosny szept + "woosh"
-[ ] Zasniecie - fatigue = 0 - spowolnione bicie serca, cisza
+[x] Voice w poblizu - whisper_ambient.wav (synteza)
+[x] Zlapany przez Voice - enemy_catch.wav (synteza)
+[x] Zasniecie - heartbeat.wav (synteza, zwalniajacy)
 
-AMBIENT (opcjonalne)
---------------------
-[ ] Wiatr / liscie - caly czas lekko - loop szumu wiatru
-[ ] Mruczenie kota - kot w inventory - cichy purr loop
+AMBIENT
+-------
+[x] Wiatr / liscie - wind_loop.wav (synteza, 5 sek loop)
+[ ] Mruczenie kota - POTRZEBNE PRAWDZIWE NAGRANIE SPRYTKA -> audio/cat/
+
+STRUKTURA PLIKOW
+----------------
+audio/
+  sfx/       <- wygenerowane efekty (generate_sfx.py)
+  cat/       <- prawdziwe nagrania sprytka (do nagrania)
+  music/     <- kompozycje na levele (autumn1-7.ogg)
 
 NARZEDZIA
 ---------
+- generate_sfx.py - skrypt do regeneracji dzwiekow syntezowanych
 - sfxr.me / jsfxr - retro dzwieki (UI, power-upy)
 - ChipTone (sfbgames.itch.io/chiptone) - rozbudowany generator
 - Freesound.org - darmowa biblioteka

@@ -42,6 +42,7 @@ class Npc:
         self.dialog_cooldown = 0
         self.player_near = False
         self.f_key_pressed = False
+        self.dialog_blip = False  # set True on each dialog advance
 
         # Font do tekstu dialogu (pixelowy) - uses cache
         self.dialog_font = get_font(10)
@@ -63,6 +64,7 @@ class Npc:
             self.dialog_cooldown -= 1
 
         # Obsługa klawisza F
+        self.dialog_blip = False
         if keys[pygame.K_f] and not self.f_key_pressed and self.dialog_cooldown == 0:
             self.f_key_pressed = True
             if self.player_near:
@@ -70,6 +72,7 @@ class Npc:
                     # Rozpocznij rozmowę
                     self.is_talking = True
                     self.current_text_index = 0
+                    self.dialog_blip = True
                 else:
                     # Przejdź do następnego tekstu
                     self.current_text_index += 1
@@ -79,6 +82,7 @@ class Npc:
                         self.is_talking = False
                         self.current_text_index = 0
                         self.current_dialog_index = (self.current_dialog_index + 1) % len(SPRYTEK_DIALOGS)
+                    self.dialog_blip = True
                 self.dialog_cooldown = 15  # Krótki cooldown między naciśnięciami
 
         if not keys[pygame.K_f]:

@@ -321,20 +321,32 @@ def gen_heartbeat():
 # =========================================================================
 
 def gen_wind_loop():
-    """Gentle wind loop — filtered noise with slow modulation."""
+    """Gentle wind loop — FFT low-passed noise with slow swells."""
     dur = 5.0
     n = int(SAMPLE_RATE * dur)
     t = np.linspace(0, dur, n, endpoint=False)
-    s = noise(n)
-    # Low-pass feel: multiply by low freq sines
-    s = s * (np.sin(2 * np.pi * 300 * t) * 0.3 + np.sin(2 * np.pi * 150 * t) * 0.4)
-    # Slow modulation
-    s *= (0.4 + 0.6 * np.sin(2 * np.pi * 0.3 * t))
-    # Smooth start and end for looping
+
+    # FFT low-pass: keeps only low frequencies → soft hiss, no ringing
+    white = np.random.uniform(-1, 1, n)
+    spectrum = np.fft.rfft(white)
+    freqs = np.fft.rfftfreq(n, 1.0 / SAMPLE_RATE)
+    # Two-pole-ish rolloff with cutoff ~350 Hz
+    cutoff = 350.0
+    mask = 1.0 / (1.0 + (freqs / cutoff) ** 2)
+    spectrum *= mask
+    s = np.fft.irfft(spectrum, n)
+    s = s / max(np.max(np.abs(s)), 1e-9)
+
+    # Very slow amplitude swells (gusts) — additive, not ring modulation
+    gust = 0.55 + 0.45 * np.sin(2 * np.pi * 0.12 * t)
+    s *= gust
+
+    # Smooth crossfade for seamless loop
     fade = int(SAMPLE_RATE * 0.5)
     s[:fade] *= np.linspace(0, 1, fade)
     s[-fade:] *= np.linspace(1, 0, fade)
-    s *= 0.3
+
+    s *= 0.55
     save_wav("wind_loop.wav", s)
 
 

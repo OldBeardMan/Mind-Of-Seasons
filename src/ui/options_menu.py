@@ -229,8 +229,3 @@ class OptionsMenu:
         hint_surface = self.small_font.render(hint_text, True, (120, 120, 130))
         hint_rect = hint_surface.get_rect(centerx=center_x, centery=center_y + 90)
         screen.blit(hint_surface, hint_rect)
-
-        # Note about volume (placeholder)
-        note_surface = self.small_font.render("(Volume settings coming soon)", True, (100, 100, 110))
-        note_rect = note_surface.get_rect(centerx=center_x, centery=center_y + 110)
-        screen.blit(note_surface, note_rect)

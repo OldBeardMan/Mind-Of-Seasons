@@ -36,6 +36,7 @@ class Inventory:
     def __init__(self, screen_width, screen_height):
         self.inventory_open = False
         self.toggle_pressed = False
+        self.just_opened = False  # set True for one frame when inventory opens
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -146,9 +147,12 @@ class Inventory:
 
     def update_inventory(self, keys, screen, stored_cats=0, fatigue=100):
         # Zmienna do śledzenia, czy ekwipunek jest otwarty
+        self.just_opened = False
         if keys[pygame.K_e] and not self.toggle_pressed:
             self.inventory_open = not self.inventory_open
             self.toggle_pressed = True
+            if self.inventory_open:
+                self.just_opened = True
 
         if not keys[pygame.K_e]:
             self.toggle_pressed = False

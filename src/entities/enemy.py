@@ -304,6 +304,17 @@ class EnemyManager:
                 return True
         return False
 
+    def min_distance_to(self, player_rect):
+        """Return distance (px) to the nearest enemy, or +inf if none."""
+        min_d = float('inf')
+        for e in self.enemies:
+            dx = e.rect.centerx - player_rect.centerx
+            dy = e.rect.centery - player_rect.centery
+            d = (dx * dx + dy * dy) ** 0.5
+            if d < min_d:
+                min_d = d
+        return min_d
+
     def draw(self, screen, camera_offset):
         """Draw all enemies."""
         for enemy in self.enemies:

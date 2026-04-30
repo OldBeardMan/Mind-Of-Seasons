@@ -10,7 +10,7 @@ from src.ui import (
 )
 from src.utils import preload_all_assets, clear_all_caches, resource_path
 from src.save_system import save_game, load_game, load_settings, save_settings, delete_save, get_save_dir
-from src.audio import MusicManager
+from src.audio import MusicManager, SfxManager
 from src.config import TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
 
 
@@ -49,6 +49,14 @@ except Exception:
 # Music
 music_manager = MusicManager()
 music_manager.set_volume(settings.get('music_volume', 60), settings.get('master_volume', 80))
+
+# SFX
+sfx_manager = SfxManager()
+sfx_manager.set_volume(settings.get('sfx_volume', 100), settings.get('master_volume', 80))
+
+
+def start_ambient():
+    sfx_manager.start_loop("whisper_ambient", SfxManager.CHANNEL_WHISPER, 0.0)
 
 
 # Game state
@@ -100,6 +108,7 @@ class InputState:
 
 
 input_state = InputState()
+was_inside_cabin = False
 
 
 def toggle_fullscreen(fullscreen):
@@ -359,6 +368,7 @@ def restart_current_game():
         return
     init_new_game(current_slot, seed=map_seed)
     music_manager.start()
+    start_ambient()
 
 
 # Preload assets during loading screen
@@ -415,6 +425,7 @@ while running:
                 init_new_game(data)
                 current_state = GameState.PLAYING
                 music_manager.start()
+                start_ambient()
             except Exception as e:
                 import traceback
                 traceback.print_exc()
@@ -428,6 +439,7 @@ while running:
                 if load_saved_game(data):
                     current_state = GameState.PLAYING
                     music_manager.start()
+                    start_ambient()
                 else:
                     # Load failed, stay in menu
                     main_menu.refresh_saves()
@@ -458,6 +470,7 @@ while running:
             pause_menu.show()
             current_state = GameState.PAUSED
             music_manager.pause()
+            sfx_manager.pause_all()
             input_state.esc_pressed = True
         elif not keys[pygame.K_ESCAPE]:
             input_state.esc_pressed = False
@@ -498,19 +511,44 @@ while running:
         # Update game objects (don't move player when inventory is open)
         if not inventory.inventory_open:
             player.update(keys, clock, npc, background, cabin)
+            if player.step_taken:
+                if cabin.is_player_inside(player.player_rect):
+                    surface = "cabin"
+                else:
+                    tx = int(player.player_rect.centerx // TILE_SIZE)
+                    ty = int(player.player_rect.centery // TILE_SIZE)
+                    if 0 <= ty < len(background.map_data) and 0 <= tx < len(background.map_data[0]):
+                        surface = "path" if background.map_data[ty][tx] == "path" else "grass"
+                    else:
+                        surface = "grass"
+                sfx_manager.play_footstep(surface)
         npc.update(keys, player)
+        if npc.dialog_blip:
+            sfx_manager.play("dialog_blip")
         enemy_manager.update(clock.get_time(), player.player_rect)
+
+        # Whisper ambient proximity
+        nearest = enemy_manager.min_distance_to(player.player_rect)
+        if nearest >= 500:
+            whisper_scale = 0.0
+        elif nearest <= 120:
+            whisper_scale = 1.0
+        else:
+            whisper_scale = (500 - nearest) / (500 - 120)
+        sfx_manager.set_loop_scale("whisper_ambient", whisper_scale)
 
         # Update fatigue
         player.update_fatigue(clock.get_time())
 
         # Check if player fell asleep
         if player.is_exhausted():
+            sfx_manager.play("heartbeat")
             game_over_screen.show("You fell asleep!")
             continue
 
         # Check enemy collision
         if enemy_manager.check_player_collision(player.player_rect):
+            sfx_manager.play("enemy_catch")
             game_over_screen.show("Voice caught you!")
             continue
 
@@ -528,6 +566,7 @@ while running:
                 if collected:
                     inventory.pick_up_cat(cat_image_index)
                     lore_display.show_lore(CATS_LORE[cat_image_index], background.cat_images[cat_image_index])
+                    sfx_manager.play("item_pickup")
                     input_state.collect_cooldown = 30
         else:
             inventory.set_collect_hint(False)
@@ -540,6 +579,7 @@ while running:
                     if collected:
                         inventory.add_collectible(coll_item_index)
                         lore_display.show_lore(COLLECTIBLES_LORE[coll_item_index], background.collectible_images[coll_item_index])
+                        sfx_manager.play("item_pickup")
                         input_state.collect_cooldown = 30
             else:
                 inventory.set_collectible_hint(False)
@@ -548,6 +588,9 @@ while running:
 
         # Check if player is inside cabin
         player_inside_cabin = cabin.is_player_inside(player.player_rect)
+        if player_inside_cabin and not was_inside_cabin:
+            sfx_manager.play("door_creak")
+        was_inside_cabin = player_inside_cabin
         if player_inside_cabin:
             inventory.set_storage_hint(True)
             if keys[pygame.K_g] and not input_state.g_key_pressed and input_state.collect_cooldown == 0:
@@ -555,6 +598,7 @@ while running:
                     cat_idx = inventory.put_down_cat()
                     if cat_idx is not None:
                         cabin.store_cat(cat_idx)
+                        sfx_manager.play("cat_place")
                     input_state.collect_cooldown = 30
         else:
             inventory.set_storage_hint(False)
@@ -570,6 +614,7 @@ while running:
                         input_state.is_brewing = True
                         input_state.brew_timer = 3000
                         input_state.collect_cooldown = 30
+                        sfx_manager.play("coffee_brew")
                 else:
                     inventory.set_coffee_hint(False)
             else:
@@ -591,6 +636,7 @@ while running:
             if keys[pygame.K_v] and not input_state.v_key_pressed and input_state.collect_cooldown == 0:
                 if inventory.drink_coffee():
                     player.drink_coffee()
+                    sfx_manager.play("coffee_drink")
                     input_state.collect_cooldown = 30
 
         input_state.c_key_pressed = keys[pygame.K_c]
@@ -614,6 +660,8 @@ while running:
 
         stored_cats = cabin.get_stored_cat_count()
         inventory.update_inventory(keys, screen, stored_cats, player.get_fatigue_percent())
+        if inventory.just_opened:
+            sfx_manager.play("inventory_open")
         npc.draw_chat_graphics(screen, player, camera_offset)
 
         # Draw cabin arrow indicator when cabin is off-screen
@@ -644,6 +692,7 @@ while running:
         if action == "resume":
             current_state = GameState.PLAYING
             music_manager.resume()
+            sfx_manager.resume_all()
 
         elif action == "save":
             success = save_current_game()
@@ -657,6 +706,7 @@ while running:
         elif action == "main_menu":
             save_current_game()  # Auto-save before leaving
             music_manager.stop()
+            sfx_manager.stop_all_loops()
             current_state = GameState.MAIN_MENU
             main_menu.state = MainMenu.STATE_MAIN
             main_menu.refresh_saves()
@@ -664,6 +714,7 @@ while running:
         elif action == "quit":
             save_current_game()  # Auto-save before quitting
             music_manager.stop()
+            sfx_manager.stop_all_loops()
             running = False
 
         # Draw game in background
@@ -692,6 +743,7 @@ while running:
             # Sync volume from settings
             s = options_menu.settings
             music_manager.set_volume(s.get('music_volume', 60), s.get('master_volume', 80))
+            sfx_manager.set_volume(s.get('sfx_volume', 100), s.get('master_volume', 80))
             current_state = previous_state if previous_state else GameState.MAIN_MENU
             # Set cooldown to prevent ESC from immediately quitting main menu
             if current_state == GameState.MAIN_MENU:

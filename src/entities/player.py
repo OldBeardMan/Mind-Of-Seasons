@@ -29,6 +29,7 @@ class Player:
         self.speed = self.base_speed
         self.is_walking = False
         self.facing_right = True
+        self.step_taken = False  # set True for one frame on each animation step
 
         # Fatigue system
         self.fatigue = 100.0  # 0-100 scale (100 = fully awake)
@@ -91,11 +92,13 @@ class Player:
         self.map_position[1] = self.player_rect.y // self.tile_size
 
         # Animation
+        self.step_taken = False
         if self.is_walking:
             self.animation_timer += clock.get_time()
             if self.animation_timer > self.animation_speed:
                 self.animation_timer = 0
                 self.current_frame = (self.current_frame + 1) % len(self.walk_animation)
+                self.step_taken = True
             self.image = self.walk_animation[self.current_frame]
         else:
             self.image = self.idle_image
